@@ -190,7 +190,61 @@ function createPortalThreeScene(range) {
 function createPortalFourScene(range) {
     registerGeometry(range, "field", createSnowField);
     registerGeometry(range, "cliffs", createSnowCliffs);
-    registerGeometry(range, "rocks", createSnowRocks);
+    registerGeometry(range, "gravestones", function () {
+        var gravestoneBaseY = -0.24;
+        var gravestoneHeight = 0.13 * 1.15;
+        var gravestoneWidth = 0.04 * 1.10;
+        var gravestoneDepth = 0.02;
+        var gravestoneColor = vec4(0.55, 0.54, 0.52, 1.0);
+        var centers = [
+            vec3(-0.09, gravestoneBaseY + gravestoneHeight / 2.0, -0.06),
+            vec3(-0.09, gravestoneBaseY + gravestoneHeight / 2.0, 0.23),
+            vec3(-0.01, gravestoneBaseY + gravestoneHeight / 2.0, -0.09),
+            vec3(-0.01, gravestoneBaseY + gravestoneHeight / 2.0, 0.09)
+        ];
+        for (var i = 0; i < centers.length; i++) {
+            createGravestones({
+                center: centers[i],
+                width: gravestoneWidth,
+                depth: gravestoneDepth,
+                height: gravestoneHeight,
+                color: gravestoneColor
+            });
+        }
+    });
+    registerGeometry(range, "rocks", function () {
+        var baseY = -0.24;
+        var minX = -0.45;
+        var maxX = 0.35;
+        var minZ = -0.45;
+        var maxZ = 0.45;
+        var x1 = minX + (maxX - minX) * (1 / 3) - 0.08;
+        var x2 = minX + (maxX - minX) * (1 / 2) - 0.08;
+        var x3 = minX + (maxX - minX) * (1.2) + 0.08 - 0.25 - 0.125;
+        var rocks = [
+            {
+                center: vec3(x1, baseY - 0.09 * 0.2, minZ + 0.13),
+                radius: 0.09,
+                color: vec4(0.78, 0.75, 0.72, 1.0),
+                seed: 1234
+            },
+            {
+                center: vec3(x2, baseY - 0.07 * 0.2, minZ + 0.13),
+                radius: 0.07,
+                color: vec4(0.72, 0.68, 0.65, 1.0),
+                seed: 2011
+            },
+            {
+                center: vec3(x3, baseY - 0.11 * 0.2, maxZ - 0.13),
+                radius: 0.11,
+                color: vec4(0.80, 0.77, 0.74, 1.0),
+                seed: 2899
+            }
+        ];
+        for (var j = 0; j < rocks.length; j++) {
+            createSnowRocks(rocks[j]);
+        }
+    });
     registerGeometry(range, "beam", createPortalLightBeam);
 }
 
@@ -527,6 +581,9 @@ function drawSnowScene() {
     }
     if (snow.field.count > 0) {
         gl.drawArrays(gl.TRIANGLES, snow.field.start, snow.field.count);
+    }
+    if (snow.gravestones && snow.gravestones.count > 0) {
+        gl.drawArrays(gl.TRIANGLES, snow.gravestones.start, snow.gravestones.count);
     }
     if (snow.cliffs.count > 0) {
         gl.enable(gl.BLEND);
