@@ -293,8 +293,8 @@
             var height = 0.04 * size;
             createGuardianSegment(x, y, z, segmentLength * 1.2, width, height);
         }
-        createGuardianFins(baseX - totalLength * 0.3, baseY + 0.04, baseZ, 0.3);
-        createGuardianFins(baseX - totalLength * 0.6, baseY + 0.02, baseZ, 0.25);
+        createGuardianFins(baseX - totalLength * 0.3, baseY + 0.04, baseZ+0.05, 0.3);
+        createGuardianFins(baseX - totalLength * 0.45, baseY + 0.08, baseZ, 0.25);
     }
 
     /** 수호자 몸체의 캡슐형 세그먼트 하나 생성 */
@@ -338,38 +338,38 @@
     });
     }
 
-    /** 수호자 지느러미 생성: 좌/우 얇은 삼각형 */
+    /** 수호자 지느러미 생성: 좌/우 얇은 직육면체 */
     function createGuardianFins(centerX, centerY, centerZ, finSpan) {
     // 날개를 z축 방향으로 세운 직육면체로 생성
-    var wingColor = vec4(0.7, 0.8, 0.9, 0.5); // 밝은 푸른빛 반투명 날개
+    var bodyColor = vec4(0.18, 0.19, 0.22, 1.0);      // 기본 검회색
+    var darkBodyColor = vec4(0.10, 0.11, 0.13, 1.0);  // 더 어두운 검회색
+    var brightColor = vec4(0.28, 0.29, 0.32, 1.0);    // 밝은 회색(빛 받는 면)
     var wingLength = 0.07;  // 앞뒤로 더 짧게 (X축)
     var wingWidth = 0.02;   // 두께(얇게, Y축)
     var wingHeight = 0.22;  // 높이(더 길게, Z축)
-    var brightWing = scaleColor(wingColor, 1.05);
-    var darkWing = scaleColor(wingColor, 0.9);
 
     var leftCenterX = centerX + wingLength / 2;
     var leftCenterZ = centerZ - finSpan / 2;
     createHexahedron(leftCenterX, centerY, leftCenterZ, wingLength, wingHeight, wingWidth, 1.0, {
-        positiveX: brightWing,
-        negativeX: darkWing,
-        positiveZ: wingColor,
-        negativeZ: wingColor,
-        positiveY: brightWing,
-        negativeY: darkWing,
-        default: wingColor
+        positiveX: brightColor,
+        negativeX: darkBodyColor,
+        positiveZ: bodyColor,
+        negativeZ: scaleColor(bodyColor, 0.9),
+        positiveY: brightColor,
+        negativeY: darkBodyColor,
+        default: bodyColor
     });
 
     var rightCenterX = centerX + wingLength / 2;
     var rightCenterZ = centerZ + finSpan / 2;
     createHexahedron(rightCenterX, centerY, rightCenterZ, wingLength, wingHeight, wingWidth, 1.0, {
-        positiveX: brightWing,
-        negativeX: darkWing,
-        positiveZ: wingColor,
-        negativeZ: wingColor,
-        positiveY: brightWing,
-        negativeY: darkWing,
-        default: wingColor
+        positiveX: brightColor,
+        negativeX: darkBodyColor,
+        positiveZ: bodyColor,
+        negativeZ: scaleColor(bodyColor, 0.9),
+        positiveY: brightColor,
+        negativeY: darkBodyColor,
+        default: bodyColor
     });
     }
 
