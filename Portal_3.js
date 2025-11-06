@@ -1,5 +1,31 @@
 (function (global) {
     // Tower portal geometry: spiral tower, platforms, cloth banners, water, and interior masks.
+
+    /** 사각형 두 개의 삼각형으로 분리해 push */
+    function emitQuad(v1, v2, v3, v4, color) {
+        points.push(v1); colors.push(color);
+        points.push(v2); colors.push(color);
+        points.push(v3); colors.push(color);
+        points.push(v1); colors.push(color);
+        points.push(v3); colors.push(color);
+        points.push(v4); colors.push(color);
+    }
+
+    /** 색상에 배율을 적용(밝기 조정) */
+    function scaleColor(color, factor) {
+        return vec4(color[0] * factor, color[1] * factor, color[2] * factor, color[3]);
+    }
+
+    /** 사각형에 각 꼭짓점별 색상을 지정해 push */
+    function emitQuadColored(v1, c1, v2, c2, v3, c3, v4, c4) {
+        points.push(v1); colors.push(c1);
+        points.push(v2); colors.push(c2);
+        points.push(v3); colors.push(c3);
+        points.push(v1); colors.push(c1);
+        points.push(v3); colors.push(c3);
+        points.push(v4); colors.push(c4);
+    }
+
     function createTower() {
         // Cylindrical main tower with decorative horizontal bands and shading.
         var towerColor1 = vec4(0.35, 0.30, 0.28, 1.0);
@@ -25,48 +51,31 @@
             var z1 = radius * Math.sin(theta1) + centerZ;
             var x2 = radius * Math.cos(theta2);
             var z2 = radius * Math.sin(theta2) + centerZ;
-            points.push(vec4(x1, baseY, z1, 1.0)); colors.push(towerColor2);
-            points.push(vec4(x2, baseY, z2, 1.0)); colors.push(towerColor2);
-            points.push(vec4(x2, band1Y1, z2, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x1, baseY, z1, 1.0)); colors.push(towerColor2);
-            points.push(vec4(x2, band1Y1, z2, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x1, band1Y1, z1, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x1, band1Y1, z1, 1.0)); colors.push(bandColor);
-            points.push(vec4(x2, band1Y1, z2, 1.0)); colors.push(bandColor);
-            points.push(vec4(x2, band1Y2, z2, 1.0)); colors.push(bandColor);
-            points.push(vec4(x1, band1Y1, z1, 1.0)); colors.push(bandColor);
-            points.push(vec4(x2, band1Y2, z2, 1.0)); colors.push(bandColor);
-            points.push(vec4(x1, band1Y2, z1, 1.0)); colors.push(bandColor);
-            points.push(vec4(x1, band1Y2, z1, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x2, band1Y2, z2, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x2, band2Y1, z2, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x1, band1Y2, z1, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x2, band2Y1, z2, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x1, band2Y1, z1, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x1, band2Y1, z1, 1.0)); colors.push(bandColor);
-            points.push(vec4(x2, band2Y1, z2, 1.0)); colors.push(bandColor);
-            points.push(vec4(x2, band2Y2, z2, 1.0)); colors.push(bandColor);
-            points.push(vec4(x1, band2Y1, z1, 1.0)); colors.push(bandColor);
-            points.push(vec4(x2, band2Y2, z2, 1.0)); colors.push(bandColor);
-            points.push(vec4(x1, band2Y2, z1, 1.0)); colors.push(bandColor);
-            points.push(vec4(x1, band2Y2, z1, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x2, band2Y2, z2, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x2, band3Y1, z2, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x1, band2Y2, z1, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x2, band3Y1, z2, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x1, band3Y1, z1, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x1, band3Y1, z1, 1.0)); colors.push(bandColor);
-            points.push(vec4(x2, band3Y1, z2, 1.0)); colors.push(bandColor);
-            points.push(vec4(x2, band3Y2, z2, 1.0)); colors.push(bandColor);
-            points.push(vec4(x1, band3Y1, z1, 1.0)); colors.push(bandColor);
-            points.push(vec4(x2, band3Y2, z2, 1.0)); colors.push(bandColor);
-            points.push(vec4(x1, band3Y2, z1, 1.0)); colors.push(bandColor);
-            points.push(vec4(x1, band3Y2, z1, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x2, band3Y2, z2, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x2, topY, z2, 1.0)); colors.push(towerColor3);
-            points.push(vec4(x1, band3Y2, z1, 1.0)); colors.push(towerColor1);
-            points.push(vec4(x2, topY, z2, 1.0)); colors.push(towerColor3);
-            points.push(vec4(x1, topY, z1, 1.0)); colors.push(towerColor3);
+
+            var base1 = vec4(x1, baseY, z1, 1.0);
+            var base2 = vec4(x2, baseY, z2, 1.0);
+            var band1Low1 = vec4(x1, band1Y1, z1, 1.0);
+            var band1Low2 = vec4(x2, band1Y1, z2, 1.0);
+            var band1High1 = vec4(x1, band1Y2, z1, 1.0);
+            var band1High2 = vec4(x2, band1Y2, z2, 1.0);
+            var band2Low1 = vec4(x1, band2Y1, z1, 1.0);
+            var band2Low2 = vec4(x2, band2Y1, z2, 1.0);
+            var band2High1 = vec4(x1, band2Y2, z1, 1.0);
+            var band2High2 = vec4(x2, band2Y2, z2, 1.0);
+            var band3Low1 = vec4(x1, band3Y1, z1, 1.0);
+            var band3Low2 = vec4(x2, band3Y1, z2, 1.0);
+            var band3High1 = vec4(x1, band3Y2, z1, 1.0);
+            var band3High2 = vec4(x2, band3Y2, z2, 1.0);
+            var top1 = vec4(x1, topY, z1, 1.0);
+            var top2 = vec4(x2, topY, z2, 1.0);
+
+            emitQuadColored(base1, towerColor2, base2, towerColor2, band1Low2, towerColor1, band1Low1, towerColor1);
+            emitQuad(band1Low1, band1Low2, band1High2, band1High1, bandColor);
+            emitQuad(band1High1, band1High2, band2Low2, band2Low1, towerColor1);
+            emitQuad(band2Low1, band2Low2, band2High2, band2High1, bandColor);
+            emitQuad(band2High1, band2High2, band3Low2, band3Low1, towerColor1);
+            emitQuad(band3Low1, band3Low2, band3High2, band3High1, bandColor);
+            emitQuadColored(band3High1, towerColor1, band3High2, towerColor1, top2, towerColor3, top1, towerColor3);
         }
         var topCenter = vec4(0.0, topY, centerZ, 1.0);
         for (var j = 0; j < segments; j++) {
@@ -116,15 +125,14 @@
             var z1 = centerZ + size * Math.sin(theta1);
             var x2 = centerX + size * Math.cos(theta2);
             var z2 = centerZ + size * Math.sin(theta2);
+            var top1 = vec4(x1, topY, z1, 1.0);
+            var top2 = vec4(x2, topY, z2, 1.0);
+            var bottom1 = vec4(x1, bottomY, z1, 1.0);
+            var bottom2 = vec4(x2, bottomY, z2, 1.0);
             points.push(vec4(centerX, topY, centerZ, 1.0)); colors.push(color);
-            points.push(vec4(x1, topY, z1, 1.0)); colors.push(color);
-            points.push(vec4(x2, topY, z2, 1.0)); colors.push(color);
-            points.push(vec4(x1, topY, z1, 1.0)); colors.push(color);
-            points.push(vec4(x1, bottomY, z1, 1.0)); colors.push(color);
-            points.push(vec4(x2, bottomY, z2, 1.0)); colors.push(color);
-            points.push(vec4(x1, topY, z1, 1.0)); colors.push(color);
-            points.push(vec4(x2, bottomY, z2, 1.0)); colors.push(color);
-            points.push(vec4(x2, topY, z2, 1.0)); colors.push(color);
+            points.push(top1); colors.push(color);
+            points.push(top2); colors.push(color);
+            emitQuad(top1, top2, bottom2, bottom1, color);
         }
     }
 
@@ -178,12 +186,7 @@
             var p2 = vec4(edge1X + perpX * clothWidth, edge1Y, edge1Z + perpZ * clothWidth, 1.0);
             var p3 = vec4(edge2X + perpX * clothWidth, edge2Y, edge2Z + perpZ * clothWidth, 1.0);
             var p4 = vec4(edge2X - perpX * clothWidth, edge2Y, edge2Z - perpZ * clothWidth, 1.0);
-            points.push(p1); colors.push(clothColor);
-            points.push(p2); colors.push(clothColor);
-            points.push(p3); colors.push(clothColor);
-            points.push(p1); colors.push(clothColor);
-            points.push(p3); colors.push(clothColor);
-            points.push(p4); colors.push(clothColor);
+            emitQuad(p1, p2, p3, p4, clothColor);
         }
     }
 
@@ -208,49 +211,47 @@
         var v5 = vec4(maxX, minY, maxZ, 1.0);
         var v6 = vec4(maxX, maxY, maxZ, 1.0);
         var v7 = vec4(minX, maxY, maxZ, 1.0);
-        points.push(v4); colors.push(waterDepthColor);
-        points.push(v5); colors.push(waterDepthColor);
-        points.push(v6); colors.push(waterDepthColor);
-        points.push(v4); colors.push(waterDepthColor);
-        points.push(v6); colors.push(waterDepthColor);
-        points.push(v7); colors.push(waterDepthColor);
-        points.push(v0); colors.push(waterDepthColor);
-        points.push(v4); colors.push(waterDepthColor);
-        points.push(v7); colors.push(waterDepthColor);
-        points.push(v0); colors.push(waterDepthColor);
-        points.push(v7); colors.push(waterDepthColor);
-        points.push(v3); colors.push(waterDepthColor);
-        points.push(v1); colors.push(waterDepthColor);
-        points.push(v2); colors.push(waterDepthColor);
-        points.push(v6); colors.push(waterDepthColor);
-        points.push(v1); colors.push(waterDepthColor);
-        points.push(v6); colors.push(waterDepthColor);
-        points.push(v5); colors.push(waterDepthColor);
-        points.push(v3); colors.push(waterSurfaceColor);
-        points.push(v7); colors.push(waterSurfaceColor);
-        points.push(v6); colors.push(waterSurfaceColor);
-        points.push(v3); colors.push(waterSurfaceColor);
-        points.push(v6); colors.push(waterSurfaceColor);
-        points.push(v2); colors.push(waterSurfaceColor);
+        emitQuad(v4, v5, v6, v7, waterDepthColor);
+        emitQuad(v0, v4, v7, v3, waterDepthColor);
+        emitQuad(v1, v2, v6, v5, waterDepthColor);
+        emitQuad(v3, v7, v6, v2, waterSurfaceColor);
     }
 
-    function createTowerRoom() {
-        // Left wall alcove geometry for the tower interior.
+    function createTowerRoom(side, options) {
+        // Interior alcove carved into the tower wall, optionally emitting the doorway mask.
+        side = side || "left";
+        options = options || {};
+
+        var emittingMask = options.mask === true;
         var nicheInnerColor = vec4(0.97, 0.92, 0.73, 1.0);
         var nicheShadowColor = vec4(0.88, 0.82, 0.64, 1.0);
-        var wallX = -0.5;
+        var maskColor = vec4(0.0, 0.0, 0.0, 1.0);
         var nicheDepth = 0.18;
         var nicheWidth = 0.22;
         var nicheHeight = 0.20;
-        var centerY = 0.10;
         var centerZ = 0.02;
         var frontInset = 0.05;
-        var frontX = wallX - frontInset;
-        var backX = frontX - nicheDepth;
+
+        var isRight = side === "right";
+        var wallX = isRight ? 0.5 : -0.5;
+        var centerY = isRight ? 0.02 : 0.10;
+        var facing = isRight ? 1 : -1;
+        var frontX = wallX + facing * frontInset;
+        var backX = frontX + facing * nicheDepth;
         var minY = centerY - nicheHeight / 2;
         var maxY = centerY + nicheHeight / 2;
         var minZ = centerZ - nicheWidth / 2;
         var maxZ = centerZ + nicheWidth / 2;
+
+        if (emittingMask) {
+            var maskV0 = vec4(frontX, minY, minZ, 1.0);
+            var maskV1 = vec4(frontX, minY, maxZ, 1.0);
+            var maskV2 = vec4(frontX, maxY, maxZ, 1.0);
+            var maskV3 = vec4(frontX, maxY, minZ, 1.0);
+            emitQuad(maskV0, maskV1, maskV2, maskV3, maskColor);
+            return;
+        }
+
         var ri0 = vec4(frontX, minY, minZ, 1.0);
         var ri1 = vec4(frontX, minY, maxZ, 1.0);
         var ri2 = vec4(frontX, maxY, maxZ, 1.0);
@@ -259,133 +260,11 @@
         var b1 = vec4(backX, minY, maxZ, 1.0);
         var b2 = vec4(backX, maxY, maxZ, 1.0);
         var b3 = vec4(backX, maxY, minZ, 1.0);
-        points.push(ri0); colors.push(nicheInnerColor);
-        points.push(b0); colors.push(nicheShadowColor);
-        points.push(b3); colors.push(nicheShadowColor);
-        points.push(ri0); colors.push(nicheInnerColor);
-        points.push(b3); colors.push(nicheShadowColor);
-        points.push(ri3); colors.push(nicheInnerColor);
-        points.push(ri1); colors.push(nicheInnerColor);
-        points.push(ri2); colors.push(nicheInnerColor);
-        points.push(b2); colors.push(nicheShadowColor);
-        points.push(ri1); colors.push(nicheInnerColor);
-        points.push(b2); colors.push(nicheShadowColor);
-        points.push(b1); colors.push(nicheShadowColor);
-        points.push(ri3); colors.push(nicheInnerColor);
-        points.push(b3); colors.push(nicheShadowColor);
-        points.push(b2); colors.push(nicheShadowColor);
-        points.push(ri3); colors.push(nicheInnerColor);
-        points.push(b2); colors.push(nicheShadowColor);
-        points.push(ri2); colors.push(nicheInnerColor);
-        points.push(ri0); colors.push(nicheInnerColor);
-        points.push(ri1); colors.push(nicheInnerColor);
-        points.push(b1); colors.push(nicheShadowColor);
-        points.push(ri0); colors.push(nicheInnerColor);
-        points.push(b1); colors.push(nicheShadowColor);
-        points.push(b0); colors.push(nicheShadowColor);
-    }
 
-    function createTowerEntranceMask() {
-        // Black rectangle to punch a doorway opening on the left wall.
-        var wallX = -0.5;
-        var nicheWidth = 0.22;
-        var nicheHeight = 0.20;
-        var centerY = 0.10;
-        var centerZ = 0.02;
-        var frontInset = 0.05;
-        var frontX = wallX - frontInset;
-        var minY = centerY - nicheHeight / 2;
-        var maxY = centerY + nicheHeight / 2;
-        var minZ = centerZ - nicheWidth / 2;
-        var maxZ = centerZ + nicheWidth / 2;
-        var maskColor = vec4(0.0, 0.0, 0.0, 1.0);
-        var v0 = vec4(frontX, minY, minZ, 1.0);
-        var v1 = vec4(frontX, minY, maxZ, 1.0);
-        var v2 = vec4(frontX, maxY, maxZ, 1.0);
-        var v3 = vec4(frontX, maxY, minZ, 1.0);
-        points.push(v0); colors.push(maskColor);
-        points.push(v1); colors.push(maskColor);
-        points.push(v2); colors.push(maskColor);
-        points.push(v0); colors.push(maskColor);
-        points.push(v2); colors.push(maskColor);
-        points.push(v3); colors.push(maskColor);
-    }
-
-    function createTowerRoomRight() {
-        // Mirrored alcove on the right wall to balance the interior.
-        var nicheInnerColor = vec4(0.97, 0.92, 0.73, 1.0);
-        var nicheShadowColor = vec4(0.88, 0.82, 0.64, 1.0);
-        var wallX = 0.5;
-        var nicheDepth = 0.18;
-        var nicheWidth = 0.22;
-        var nicheHeight = 0.20;
-        var centerY = 0.02;
-        var centerZ = 0.02;
-        var frontInset = 0.05;
-        var frontX = wallX + frontInset;
-        var backX = frontX + nicheDepth;
-        var minY = centerY - nicheHeight / 2;
-        var maxY = centerY + nicheHeight / 2;
-        var minZ = centerZ - nicheWidth / 2;
-        var maxZ = centerZ + nicheWidth / 2;
-        var ri0 = vec4(frontX, minY, minZ, 1.0);
-        var ri1 = vec4(frontX, minY, maxZ, 1.0);
-        var ri2 = vec4(frontX, maxY, maxZ, 1.0);
-        var ri3 = vec4(frontX, maxY, minZ, 1.0);
-        var b0 = vec4(backX, minY, minZ, 1.0);
-        var b1 = vec4(backX, minY, maxZ, 1.0);
-        var b2 = vec4(backX, maxY, maxZ, 1.0);
-        var b3 = vec4(backX, maxY, minZ, 1.0);
-        points.push(ri0); colors.push(nicheInnerColor);
-        points.push(b0); colors.push(nicheShadowColor);
-        points.push(b3); colors.push(nicheShadowColor);
-        points.push(ri0); colors.push(nicheInnerColor);
-        points.push(b3); colors.push(nicheShadowColor);
-        points.push(ri3); colors.push(nicheInnerColor);
-        points.push(ri1); colors.push(nicheInnerColor);
-        points.push(ri2); colors.push(nicheInnerColor);
-        points.push(b2); colors.push(nicheShadowColor);
-        points.push(ri1); colors.push(nicheInnerColor);
-        points.push(b2); colors.push(nicheShadowColor);
-        points.push(b1); colors.push(nicheShadowColor);
-        points.push(ri3); colors.push(nicheInnerColor);
-        points.push(b3); colors.push(nicheShadowColor);
-        points.push(b2); colors.push(nicheShadowColor);
-        points.push(ri3); colors.push(nicheInnerColor);
-        points.push(b2); colors.push(nicheShadowColor);
-        points.push(ri2); colors.push(nicheInnerColor);
-        points.push(ri0); colors.push(nicheInnerColor);
-        points.push(ri1); colors.push(nicheInnerColor);
-        points.push(b1); colors.push(nicheShadowColor);
-        points.push(ri0); colors.push(nicheInnerColor);
-        points.push(b1); colors.push(nicheShadowColor);
-        points.push(b0); colors.push(nicheShadowColor);
-    }
-
-    function createTowerEntranceMaskRight() {
-        // Mask for the right doorway opening used in the stencil pass.
-        var wallX = 0.5;
-        var nicheWidth = 0.22;
-        var nicheHeight = 0.20;
-        var centerY = 0.02;
-        var centerZ = 0.02;
-        var frontInset = 0.05;
-        var frontX = wallX + frontInset;
-        var minY = centerY - nicheHeight / 2;
-        var maxY = centerY + nicheHeight / 2;
-        var minZ = centerZ - nicheWidth / 2;
-        var maxZ = centerZ + nicheWidth / 2;
-        var maskColor = vec4(0.0, 0.0, 0.0, 1.0);
-        var v0 = vec4(frontX, minY, minZ, 1.0);
-        var v1 = vec4(frontX, minY, maxZ, 1.0);
-        var v2 = vec4(frontX, maxY, maxZ, 1.0);
-        var v3 = vec4(frontX, maxY, minZ, 1.0);
-        points.push(v0); colors.push(maskColor);
-        points.push(v1); colors.push(maskColor);
-        points.push(v2); colors.push(maskColor);
-        points.push(v0); colors.push(maskColor);
-        points.push(v2); colors.push(maskColor);
-        points.push(v3); colors.push(maskColor);
+        emitQuadColored(ri0, nicheInnerColor, b0, nicheShadowColor, b3, nicheShadowColor, ri3, nicheInnerColor);
+        emitQuadColored(ri1, nicheInnerColor, ri2, nicheInnerColor, b2, nicheShadowColor, b1, nicheShadowColor);
+        emitQuadColored(ri3, nicheInnerColor, b3, nicheShadowColor, b2, nicheShadowColor, ri2, nicheInnerColor);
+        emitQuadColored(ri0, nicheInnerColor, ri1, nicheInnerColor, b1, nicheShadowColor, b0, nicheShadowColor);
     }
 
     global.createTower = createTower;
@@ -394,7 +273,4 @@
     global.createTowerCloths = createTowerCloths;
     global.createTowerWater = createTowerWater;
     global.createTowerRoom = createTowerRoom;
-    global.createTowerEntranceMask = createTowerEntranceMask;
-    global.createTowerRoomRight = createTowerRoomRight;
-    global.createTowerEntranceMaskRight = createTowerEntranceMaskRight;
 })(this);

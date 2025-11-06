@@ -176,10 +176,10 @@ function createPortalTwoScene(range) {
 
 // Portal_3.js tower assets
 function createPortalThreeScene(range) {
-    registerGeometry(range, "entranceMask", createTowerEntranceMask);
-    registerGeometry(range, "room", createTowerRoom);
-    registerGeometry(range, "entranceMaskRight", createTowerEntranceMaskRight);
-    registerGeometry(range, "roomRight", createTowerRoomRight);
+    registerGeometry(range, "entranceMask", function () { createTowerRoom("left", { mask: true }); });
+    registerGeometry(range, "room", function () { createTowerRoom("left"); });
+    registerGeometry(range, "entranceMaskRight", function () { createTowerRoom("right", { mask: true }); });
+    registerGeometry(range, "roomRight", function () { createTowerRoom("right"); });
     registerGeometry(range, "body", createTower);
     registerGeometry(range, "platforms", createTowerPlatforms);
     registerGeometry(range, "cloths", createTowerCloths);
