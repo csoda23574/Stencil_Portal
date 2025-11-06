@@ -1,7 +1,7 @@
 (function (global) {
-    // Tower portal geometry: spiral tower, platforms, cloth banners, water, and interior masks.
+    // 타워 포털의 나선형 구조물, 플랫폼, 천, 수면, 내부 마스크를 생성.
     function createTower() {
-        // Cylindrical main tower with decorative horizontal bands and shading.
+    // 원통형 타워 본체에 수평 장식을 두르고 명암을 부여.
         var towerColor1 = vec4(0.35, 0.30, 0.28, 1.0);
         var towerColor2 = vec4(0.28, 0.24, 0.22, 1.0);
         var towerColor3 = vec4(0.42, 0.36, 0.32, 1.0);
@@ -83,7 +83,7 @@
     }
 
     function createTowerPlatforms() {
-        // Spiral ring of octagonal platforms climbing the tower exterior.
+    // 외벽을 따라 감기는 나선형 팔각 플랫폼을 배치.
         var platformColor = vec4(0.25, 0.20, 0.18, 1.0);
         var towerRadius = 0.12;
         var platformSize = 0.08;
@@ -105,7 +105,7 @@
     }
 
     function createOctagonPlatform(centerX, centerY, centerZ, size, thickness, rotation, color) {
-        // Single rotated octagonal slab with top and side faces.
+    // 회전된 팔각 판 하나를 만들며 윗면과 옆면을 채운다.
         var segments = 8;
         var topY = centerY + thickness;
         var bottomY = centerY;
@@ -129,7 +129,7 @@
     }
 
     function createTowerCloths() {
-        // Connect neighboring platforms with draped cloth strips.
+    // 인접 플랫폼 사이를 늘어진 천으로 연결.
         var clothColor = vec4(0.7, 0.25, 0.25, 1.0);
         var towerRadius = 0.12;
         var platformSize = 0.08;
@@ -188,7 +188,7 @@
     }
 
     function createTowerWater() {
-        // Shallow reflective pool beneath the tower using layered quads.
+    // 타워 아래 얕은 반사 수조를 여러 사각형으로 구성.
         var waterSurfaceColor = vec4(0.85, 0.65, 0.3, 0.4);
         var waterDepthColor = vec4(0.9, 0.75, 0.4, 0.15);
         var numPlatforms = 8;
@@ -235,7 +235,7 @@
     }
 
     function createTowerRoom() {
-        // Left wall alcove geometry for the tower interior.
+    // 타워 내부 좌측 벽의 벽감 형상을 생성.
         var nicheInnerColor = vec4(0.97, 0.92, 0.73, 1.0);
         var nicheShadowColor = vec4(0.88, 0.82, 0.64, 1.0);
         var wallX = -0.5;
@@ -286,7 +286,7 @@
     }
 
     function createTowerEntranceMask() {
-        // Black rectangle to punch a doorway opening on the left wall.
+    // 좌측 벽에 문을 만드는 스텐실용 검은 사각형.
         var wallX = -0.5;
         var nicheWidth = 0.22;
         var nicheHeight = 0.20;
@@ -312,7 +312,7 @@
     }
 
     function createTowerRoomRight() {
-        // Mirrored alcove on the right wall to balance the interior.
+    // 내부 균형을 맞추기 위한 우측 벽의 대칭 벽감.
         var nicheInnerColor = vec4(0.97, 0.92, 0.73, 1.0);
         var nicheShadowColor = vec4(0.88, 0.82, 0.64, 1.0);
         var wallX = 0.5;
@@ -363,7 +363,7 @@
     }
 
     function createTowerEntranceMaskRight() {
-        // Mask for the right doorway opening used in the stencil pass.
+    // 우측 문을 위한 스텐실 마스크 사각형.
         var wallX = 0.5;
         var nicheWidth = 0.22;
         var nicheHeight = 0.20;

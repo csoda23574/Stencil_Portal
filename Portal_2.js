@@ -1,7 +1,7 @@
 (function (global) {
-    // Ruins portal geometry: pillars, archway, guardian creature, and light particles.
+    // 폐허 포털의 기둥, 아치, 수호자, 광입자를 생성하는 도우미.
     function createRuinsPillars() {
-        // Cluster of broken pillars placed with slightly different heights and tones.
+    // 높이와 색이 조금씩 다른 부서진 기둥들을 묶음으로 배치.
         var pillarColor1 = vec4(0.35, 0.30, 0.25, 1.0);
         var pillarColor2 = vec4(0.30, 0.28, 0.26, 1.0);
         var pillarColor3 = vec4(0.40, 0.32, 0.25, 1.0);
@@ -13,7 +13,7 @@
     }
 
     function createPillar(x, baseY, z, radius, height, color) {
-        // Build a low-poly column and shade alternate sides for simple lighting.
+    // 단순 조명을 표현하기 위해 저폴리 기둥을 만들고 면마다 명암을 준다.
         var segments = 12;
         var darkColor = vec4(color[0] * 0.7, color[1] * 0.7, color[2] * 0.7, 1.0);
         var topY = baseY + height;
@@ -47,7 +47,7 @@
     }
 
     function createRuinsArch() {
-        // Standing archway composed of two columns and a curved lintel.
+    // 두 개의 기둥과 곡선 상인방으로 이루어진 아치를 구성.
         var archColor = vec4(0.38, 0.32, 0.28, 1.0);
         var darkArchColor = vec4(0.28, 0.24, 0.20, 1.0);
         var centerX = 0.3;
@@ -62,7 +62,7 @@
     }
 
     function createArchPillar(x, baseY, z, width, height, color, darkColor) {
-        // Extrude a rectangular prism with lit and shaded faces.
+    // 직육면체를 돌출시키며 면마다 밝기 차이를 둔다.
         var halfW = width / 2;
         var v1 = vec4(x - halfW, baseY, z - halfW, 1.0);
         var v2 = vec4(x - halfW, baseY, z + halfW, 1.0);
@@ -105,7 +105,7 @@
     }
 
     function createArchTop(centerX, baseY, centerZ, width, height, thickness, color, darkColor) {
-        // Approximate a curved top by stepping through semi-circular segments.
+    // 반원을 여러 조각으로 나눠 곡면 상단을 근사한다.
         var segments = 8;
         var halfW = width / 2;
         var halfT = thickness / 2;
@@ -140,7 +140,7 @@
     }
 
     function createRuinsLight() {
-        // Floating quads serve as dust motes and beams around the arch.
+    // 떠다니는 사각형으로 아치 주변의 먼지와 빛기둥을 표현.
         var particleCount = 80;
         var particleSize = 0.008;
         var lightColors = [
@@ -170,7 +170,7 @@
     }
 
     function createRuinsGuardian() {
-        // Build a segmented flying guardian that snakes through the ruins.
+    // 폐허를 가로지르는 뱀 형태의 비행 수호자를 여러 세그먼트로 만든다.
         var segments = 12;
         var totalLength = 0.8;
         var segmentLength = totalLength / segments;
@@ -202,7 +202,7 @@
     }
 
     function createGuardianSegment(centerX, centerY, centerZ, length, width, height) {
-        // Capsule segment with simple rim lighting to convey curvature.
+    // 윤곽 조명을 넣어 곡면감을 살린 캡슐형 세그먼트를 생성.
         var bodyColor = vec4(0.38, 0.32, 0.28, 1.0);
         var darkBodyColor = vec4(0.25, 0.20, 0.16, 1.0);
         var brightColor = vec4(0.45, 0.38, 0.32, 1.0);
@@ -239,7 +239,7 @@
     }
 
     function createGuardianHead(centerX, centerY, centerZ) {
-        // Layered rings taper into a sharp head to lead the guardian.
+    // 층층이 줄어드는 링을 사용해 수호자의 머리를 날렵하게 구성.
         var headColor = vec4(0.40, 0.34, 0.30, 1.0);
         var darkHeadColor = vec4(0.28, 0.22, 0.18, 1.0);
         var brightHeadColor = vec4(0.48, 0.40, 0.34, 1.0);
@@ -304,7 +304,7 @@
     }
 
     function createGuardianFins(centerX, centerY, centerZ, finSpan) {
-        // Pair of thin tris add motion-suggesting fins to the guardian.
+    // 얇은 삼각형 쌍으로 움직임이 느껴지는 지느러미를 추가.
         var finColor = vec4(0.35, 0.30, 0.26, 1.0);
         var darkFinColor = vec4(0.22, 0.18, 0.14, 1.0);
         var finLength = 0.10;

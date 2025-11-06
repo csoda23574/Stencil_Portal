@@ -1,7 +1,7 @@
 (function (global) {
-    // Desert portal helpers: dunes, pyramids, sun effects, and floating cloth.
+    // 사막 포털에 필요한 지형과 연출(사구, 피라미드, 태양, 천)을 생성.
     function createDune(centerX, baseY, centerZ, width, height, sandColor) {
-        // Build a semi-spherical dune using stacked rings with subtle color variation.
+    // 다층 링을 쌓아 반구 형태 사구를 만들고 높이에 따라 색을 살짝 다르게 적용.
         var segments = 25;
         var rings = 8;
         for (var r = 0; r < rings; r++) {
@@ -50,14 +50,14 @@
     }
 
     function createDesertDunes() {
-        // Scatter multiple dunes to break up the foreground.
+    // 전경을 풍성하게 하기 위해 여러 개의 사구를 배치.
         createDune(-0.3, -0.5, -0.2, 0.4, 0.15, vec4(0.95, 0.75, 0.45, 1.0));
         createDune(0.2, -0.5, -0.15, 0.5, 0.2, vec4(0.92, 0.70, 0.40, 1.0));
         createDune(0.0, -0.5, 0.1, 0.35, 0.12, vec4(0.98, 0.80, 0.50, 1.0));
     }
 
     function createMountain() {
-        // Split pyramid crest to resemble the Journey-style broken monument.
+    // 저니 분위기의 갈라진 탑을 표현하기 위해 절개된 피라미드를 생성.
         var baseY = -0.5;
         var centerZ = -0.45;
         var baseWidth = 0.5;
@@ -139,7 +139,7 @@
     }
 
     function createDesertSandstorm() {
-        // Alpha-blended quads sprinkled in front of the portal to suggest blowing sand.
+    // 포털 앞에 alpha 블렌딩된 사각형 입자를 뿌려 모래바람을 표현.
         var particleCount = 150;
         var particleSize = 0.01;
         var sandColors = [
@@ -175,7 +175,7 @@
     }
 
     function createFloatingCloth(x, y, z, index) {
-        // Each cloth strip gets a phase offset so the sine waves do not sync perfectly.
+    // 천 조각마다 위상 편차를 주어 물결이 동시에 움직이지 않도록 처리.
         var clothColor = vec4(0.85, 0.15, 0.15, 1.0);
         var darkClothColor = vec4(0.65, 0.10, 0.10, 1.0);
         var segments = 15;
@@ -221,7 +221,7 @@
     }
 
     function createDesertSun() {
-        // Combine a solid sphere and a translucent glow shell for the sun.
+    // 태양 본체와 반투명 광휘 껍질을 조합해 빛나는 효과를 구현.
         var sunX = 0.0;
         var sunY = 0.3;
         var sunZ = -0.6;
@@ -235,7 +235,7 @@
     }
 
     function createSunSphere(centerX, centerY, centerZ, radius, color, latBands, longBands) {
-        // Lat-long tessellation similar to the classic WebGL solar example.
+    // 위도-경도 분할 방식으로 구를 생성하는 전형적인 WebGL 접근.
         for (var lat = 0; lat < latBands; lat++) {
             var theta = lat * Math.PI / latBands;
             var sinTheta = Math.sin(theta);
@@ -279,7 +279,7 @@
     }
 
     function createSunGlow(centerX, centerY, centerZ, innerRadius, outerRadius, latBands, longBands) {
-        // The glow uses two radii to create a soft halo with alternating colors.
+    // 두 개의 반지를 사용해 번갈아가며 색을 배치하고 부드러운 후광을 만든다.
         for (var lat = 0; lat < latBands; lat++) {
             var theta = lat * Math.PI / latBands;
             var sinTheta = Math.sin(theta);

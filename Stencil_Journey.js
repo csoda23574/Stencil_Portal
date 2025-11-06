@@ -1,4 +1,4 @@
-// Controls the main hub scene with portal selection and in-portal free-fly exploration.
+// 포털 선택 허브와 포털 내부 탐험을 모두 제어하는 메인 스크립트.
 var gl;
 var points = [];
 var colors = [];
@@ -40,7 +40,7 @@ var portalScale = 1.8;
 var basePortalSpeed = 1.2;
 var previousFrameTime = 0;
 
-// Default spawn point, orientation, and scale overrides for each portal environment.
+// 각 포털 환경 진입 시 적용할 카메라 위치, 각도, 스케일 기본값.
 var portalConfigs = {
     1: { position: [0, 0.1, 1.8], yaw: 0, pitch: -10, scale: 2.0 },
     2: { position: [0.2, 0.1, 1.9], yaw: -15, pitch: -8, scale: 2.0 },
@@ -157,7 +157,7 @@ function createStencilCube(range) {
     registerGeometry(range, "floor", buildInnerFloorGeometry);
 }
 
-// Portal_1.js desert assets
+// Portal_1.js 사막 자원 등록
 function createPortalOneScene(range) {
     registerGeometry(range, "pyramid", createMountain);
     registerGeometry(range, "dunes", createDesertDunes);
@@ -166,7 +166,7 @@ function createPortalOneScene(range) {
     registerGeometry(range, "cloth", createDesertCloth);
 }
 
-// Portal_2.js ruins assets
+// Portal_2.js 폐허 자원 등록
 function createPortalTwoScene(range) {
     registerGeometry(range, "arch", createRuinsArch);
     registerGeometry(range, "pillars", createRuinsPillars);
@@ -174,7 +174,7 @@ function createPortalTwoScene(range) {
     registerGeometry(range, "light", createRuinsLight);
 }
 
-// Portal_3.js tower assets
+// Portal_3.js 타워 자원 등록
 function createPortalThreeScene(range) {
     registerGeometry(range, "entranceMask", createTowerEntranceMask);
     registerGeometry(range, "room", createTowerRoom);
@@ -186,7 +186,7 @@ function createPortalThreeScene(range) {
     registerGeometry(range, "water", createTowerWater);
 }
 
-// Portal_4.js snowfield assets
+// Portal_4.js 설원 자원 등록
 function createPortalFourScene(range) {
     registerGeometry(range, "field", createSnowField);
     registerGeometry(range, "cliffs", createSnowCliffs);
@@ -237,7 +237,7 @@ function resetPortalMovement() {
     portalMovement.fast = false;
 }
 
-// Switch from the hub into a specific portal (1-4) and reset the travel camera.
+// 허브에서 지정한 포털(1~4)로 진입하며 카메라 상태 초기화.
 function enterPortal(portalId) {
     if (!geometryRanges || !geometryRanges.portals) {
         return;
@@ -259,7 +259,7 @@ function exitPortal() {
     resetPortalMovement();
 }
 
-// Keyboard handling covers both selecting a portal (hub) and moving (inside portal).
+// 허브에서는 포털 번호, 포털 내부에서는 이동 입력을 처리.
 function handleKeyDown(event) {
     if (renderMode === "hub") {
         switch (event.code) {
@@ -359,7 +359,7 @@ function handleKeyUp(event) {
     }
 }
 
-// Apply WASD-style movement (arrow keys plus Q/E) to the roaming camera.
+// 화살표와 Q/E 입력으로 포털 내부 자유 이동 카메라를 갱신.
 function updatePortalCamera(deltaTime) {
     var speedMultiplier = portalMovement.fast ? 2.0 : 1.0;
     var moveDistance = basePortalSpeed * speedMultiplier * deltaTime;
@@ -399,7 +399,7 @@ function updatePortalCamera(deltaTime) {
     portalCamera.position[1] = clamp(portalCamera.position[1], -0.4, 1.6);
 }
 
-// Desert portal: dunes, sun, sandstorm, and cloth streamers.
+// 사막 포털: 사구, 태양, 모래폭풍, 천 장식 렌더링.
 function drawDesertScene() {
     if (!geometryRanges || !geometryRanges.portals) {
         return;
@@ -431,7 +431,7 @@ function drawDesertScene() {
     }
 }
 
-// Ruins portal: pillars, arch, guardian statue, and volumetric light.
+// 폐허 포털: 기둥, 아치, 수호자, 볼류메트릭 조명 렌더링.
 function drawRuinsScene() {
     if (!geometryRanges || !geometryRanges.portals) {
         return;
@@ -457,7 +457,7 @@ function drawRuinsScene() {
     }
 }
 
-// Tower portal: layered rooms, tower body, cloth strips, and reflective water.
+// 타워 포털: 내부 공간, 타워 본체, 천 장식, 수면 렌더링.
 function drawTowerScene() {
     if (!geometryRanges || !geometryRanges.portals) {
         return;
@@ -516,7 +516,7 @@ function drawTowerScene() {
     gl.colorMask(true, true, true, true);
 }
 
-// Snow portal: snowfield base, translucent cliffs, and scattered rocks.
+// 설원 포털: 눈밭, 반투명 절벽, 암석, 광선 렌더링.
 function drawSnowScene() {
     if (!geometryRanges || !geometryRanges.portals) {
         return;
@@ -545,7 +545,7 @@ function drawSnowScene() {
     }
 }
 
-// Draw the original hub cube while the user is outside any portal.
+// 포털 밖일 때 허브 큐브와 각 면의 스텐실 영역을 렌더링.
 function renderHubCamera() {
     var modelViewMatrix = mat4();
     modelViewMatrix = mult(modelViewMatrix, rotate(rotationY, vec3(0, 1, 0)));
@@ -616,7 +616,7 @@ function drawHubScene() {
     gl.disable(gl.STENCIL_TEST);
 }
 
-// Activate the free-fly camera once the user steps through a numbered portal.
+// 번호를 택한 포털 내부로 들어간 뒤 자유 이동 카메라를 구성.
 function renderPortalCamera() {
     var direction = getPortalLookDirection();
     var target = addVec3(portalCamera.position, direction);
@@ -655,7 +655,7 @@ function drawPortalEnvironment(portalId) {
     }
 }
 
-// Bootstraps buffers, shaders, and input hooks once the canvas is ready.
+// 캔버스 초기화 후 버퍼, 셰이더, 입력 이벤트를 세팅.
 window.onload = function init() {
     canvas = document.getElementById("gl-canvas");
     gl = WebGLUtils.setupWebGL(canvas, { stencil: true });

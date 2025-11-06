@@ -1,7 +1,7 @@
 (function (global) {
-    // Snow portal geometry: cliffs, rocks, undulating snowfield, and portal light beam.
+    // 설원 포털에 필요한 절벽, 바위, 기복 있는 눈밭, 포털 조명을 생성.
     function createSnowCliffs() {
-        // Layered front and back cliff faces framing the snow portal.
+    // 포털을 감싸는 앞/뒤 절벽을 여러 층으로 구성.
         var frontCliffColor = vec4(0.7, 0.85, 0.95, 0.85);
         var frontCliffDark = vec4(0.5, 0.65, 0.8, 0.8);
         var xOffset = 0.24;
@@ -40,9 +40,9 @@
     }
 
     function createSnowRocks() {
-        // Gravestones plus blobby rocks sculpted with noise for variation.
+    // 묘비와 불규칙한 바위를 노이즈로 조형해 다양성을 확보.
         function createGravestones() {
-            // Simple rectangular markers sprinkled around the snowfield.
+            // 눈밭 주변에 간단한 직사각형 묘비를 배치.
             var baseY = -0.24;
             var gravestoneHeight = 0.13 * 1.15;
             var gravestoneWidth = 0.04 * 1.10;
@@ -112,7 +112,7 @@
         var latitudeBands = 18;
         var longitudeBands = 18;
         function rockNoise(seed, x, y, z) {
-            // Deterministic wobble to keep the sphere from feeling perfectly round.
+            // 구가 완벽히 둥글어 보이지 않도록 결정적 흔들림을 더한다.
             var curve = 0.98 + 0.08 * Math.sin(seed * 0.1 + x * 2.3 + y * 1.7 + z * 2.1);
             var rand = 0.97 + 0.11 * (Math.abs(Math.sin(seed * 1000 + x * 13.7 + y * 17.3 + z * 19.1)));
             return curve * rand;
@@ -164,7 +164,7 @@
     }
 
     function createSnowField() {
-        // Height-mapped snow sheet with a vertical skirt to seal the edges.
+    // 하이트 맵 기반 눈판 위에 수직 스커트를 추가해 가장자리를 덮는다.
         var baseY = -0.24;
         var amp = 0.06;
         var floorY = -0.5 + 0.0005;
@@ -175,7 +175,7 @@
         var minZ = -0.45;
         var maxZ = 0.45;
         function heightFn(x, z) {
-            // Blend sinusoids for gentle drifts across the field.
+            // 사인파를 섞어 부드러운 눈 언덕을 만든다.
             var h1 = Math.sin(x * 6.0) * 0.5 + Math.cos(z * 5.0) * 0.5;
             var h2 = Math.sin((x + z) * 3.0) * 0.3;
             var h = (h1 + h2) * 0.5;
@@ -184,7 +184,7 @@
         var dx = (maxX - minX) / nx;
         var dz = (maxZ - minZ) / nz;
         function snowColor(y) {
-            // Slightly tint snow brighter at higher elevations.
+            // 고도가 높을수록 눈 색을 조금 더 밝게 조정.
             var t = (y - (baseY - amp)) / (2 * amp);
             t = Math.max(0.0, Math.min(1.0, t));
             var r = 0.92 + 0.05 * t;
@@ -215,7 +215,7 @@
             }
         }
         function skirtColor(y) {
-            // Fade the vertical skirt toward ground white.
+            // 스커트가 바닥 근처에서 자연스럽게 흰색으로 사라지도록 처리.
             var t = (y - floorY) / Math.max(0.0001, (baseY + amp - floorY));
             t = Math.max(0.0, Math.min(1.0, t));
             var r = 0.90 + 0.06 * t;
@@ -286,7 +286,7 @@
     }
 
     function createPortalLightBeam() {
-        // Alpha-blended quad to spotlight the portal exit.
+    // 포털 출구를 강조하기 위한 알파 블렌딩 광선.
         var beamColor = vec4(1.0, 1.0, 1.0, 0.7);
         var xCenter = 0.38;
         var yBottom = -0.5;
