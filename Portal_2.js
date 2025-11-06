@@ -101,57 +101,6 @@
         );
     }
 
-    /**
-     * 육각 기둥 생성: (x, y, z)는 중심, height는 전체 높이, scale은 반지름(가로 크기)
-     * colorOption(선택): {base, bright, dark, top, bottom}
-     */
-    function createPrism(x, y, z, height, scale, colorOption) {
-        var radius = scale || 0.1;
-        var halfHeight = height / 2;
-        var bottomY = y - halfHeight;
-        var topY = y + halfHeight;
-
-        var baseColor = (colorOption && (colorOption.base || colorOption.default)) || vec4(0.35, 0.30, 0.25, 1.0);
-        var brightColor = (colorOption && colorOption.bright) || scaleColor(baseColor, 1.1);
-        var darkColor = (colorOption && colorOption.dark) || scaleColor(baseColor, 0.7);
-        var topColor = (colorOption && colorOption.top) || brightColor;
-        var bottomColor = (colorOption && colorOption.bottom) || darkColor;
-
-        var sides = 6;
-        for (var i = 0; i < sides; i++) {
-            var angle1 = (i / sides) * 2 * Math.PI;
-            var angle2 = ((i + 1) / sides) * 2 * Math.PI;
-            var midAngle = (angle1 + angle2) / 2;
-            var x1 = x + radius * Math.cos(angle1);
-            var z1 = z + radius * Math.sin(angle1);
-            var x2 = x + radius * Math.cos(angle2);
-            var z2 = z + radius * Math.sin(angle2);
-            var sideShade = Math.cos(midAngle) > 0 ? brightColor : darkColor;
-            emitQuad(
-                vec4(x1, bottomY, z1, 1.0),
-                vec4(x2, bottomY, z2, 1.0),
-                vec4(x2, topY, z2, 1.0),
-                vec4(x1, topY, z1, 1.0),
-                sideShade
-            );
-        }
-
-        for (var j = 0; j < sides; j++) {
-            var angleTop1 = (j / sides) * 2 * Math.PI;
-            var angleTop2 = ((j + 1) / sides) * 2 * Math.PI;
-            var xTop1 = x + radius * Math.cos(angleTop1);
-            var zTop1 = z + radius * Math.sin(angleTop1);
-            var xTop2 = x + radius * Math.cos(angleTop2);
-            var zTop2 = z + radius * Math.sin(angleTop2);
-            points.push(vec4(x, topY, z, 1.0)); colors.push(topColor);
-            points.push(vec4(xTop1, topY, zTop1, 1.0)); colors.push(topColor);
-            points.push(vec4(xTop2, topY, zTop2, 1.0)); colors.push(topColor);
-
-            points.push(vec4(x, bottomY, z, 1.0)); colors.push(bottomColor);
-            points.push(vec4(xTop2, bottomY, zTop2, 1.0)); colors.push(bottomColor);
-            points.push(vec4(xTop1, bottomY, zTop1, 1.0)); colors.push(bottomColor);
-        }
-    }
     /** 여러 개의 폐허 기둥을 서로 다른 파라미터로 생성 */
     function createRuinsPillars() {
     // 높이와 색이 조금씩 다른 부서진 기둥들을 묶음으로 배치.
@@ -167,16 +116,52 @@
 
     /** 단일 기둥 생성: 육각 기둥으로 간소화 */
     function createPillar(x, baseY, z, radius, height, color) {
-    // 공용 육각 기둥 헬퍼를 사용해 기둥을 구성한다.
+    // createPrism 로직을 그대로 반영해 육각 기둥을 직접 구성한다.
+        var pillarRadius = radius || 0.1;
         var centerY = baseY + height / 2;
-        var colorOption = {
-            base: color,
-            bright: scaleColor(color, 1.1),
-            dark: scaleColor(color, 0.7),
-            top: scaleColor(color, 1.05),
-            bottom: scaleColor(color, 0.65)
-        };
-        createPrism(x, centerY, z, height, radius, colorOption);
+        var halfHeight = height / 2;
+        var bottomY = centerY - halfHeight;
+        var topY = centerY + halfHeight;
+        var baseColor = color || vec4(0.35, 0.30, 0.25, 1.0);
+        var brightColor = scaleColor(baseColor, 1.1);
+        var darkColor = scaleColor(baseColor, 0.7);
+        var topColor = scaleColor(baseColor, 1.05);
+        var bottomColor = scaleColor(baseColor, 0.65);
+
+        var sides = 6;
+        for (var i = 0; i < sides; i++) {
+            var angle1 = (i / sides) * 2 * Math.PI;
+            var angle2 = ((i + 1) / sides) * 2 * Math.PI;
+            var midAngle = (angle1 + angle2) / 2;
+            var x1 = x + pillarRadius * Math.cos(angle1);
+            var z1 = z + pillarRadius * Math.sin(angle1);
+            var x2 = x + pillarRadius * Math.cos(angle2);
+            var z2 = z + pillarRadius * Math.sin(angle2);
+            var sideShade = Math.cos(midAngle) > 0 ? brightColor : darkColor;
+            emitQuad(
+                vec4(x1, bottomY, z1, 1.0),
+                vec4(x2, bottomY, z2, 1.0),
+                vec4(x2, topY, z2, 1.0),
+                vec4(x1, topY, z1, 1.0),
+                sideShade
+            );
+        }
+
+        for (var j = 0; j < sides; j++) {
+            var angleTop1 = (j / sides) * 2 * Math.PI;
+            var angleTop2 = ((j + 1) / sides) * 2 * Math.PI;
+            var xTop1 = x + pillarRadius * Math.cos(angleTop1);
+            var zTop1 = z + pillarRadius * Math.sin(angleTop1);
+            var xTop2 = x + pillarRadius * Math.cos(angleTop2);
+            var zTop2 = z + pillarRadius * Math.sin(angleTop2);
+            points.push(vec4(x, topY, z, 1.0)); colors.push(topColor);
+            points.push(vec4(xTop1, topY, zTop1, 1.0)); colors.push(topColor);
+            points.push(vec4(xTop2, topY, zTop2, 1.0)); colors.push(topColor);
+
+            points.push(vec4(x, bottomY, z, 1.0)); colors.push(bottomColor);
+            points.push(vec4(xTop2, bottomY, zTop2, 1.0)); colors.push(bottomColor);
+            points.push(vec4(xTop1, bottomY, zTop1, 1.0)); colors.push(bottomColor);
+        }
     }
 
     /** 아치 생성: 양쪽 기둥과 상부 곡선 보를 결합 */
@@ -389,7 +374,6 @@
     }
 
     global.createHexahedron = createHexahedron;
-    global.createPrism = createPrism;
     global.createRuinsPillars = createRuinsPillars;
     global.createPillar = createPillar;
     global.createRuinsArch = createRuinsArch;
