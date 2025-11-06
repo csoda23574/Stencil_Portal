@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Portal 4 - Snowfield Scene</title>
+    <script id="vertex-shader" type="x-shader/x-vertex">
+        attribute vec4 vPosition;
+        attribute vec4 vColor;
+        varying vec4 fColor;
+        uniform mat4 modelViewMatrix;
+        uniform mat4 projectionMatrix;
+        void main() {
+            gl_Position = projectionMatrix * modelViewMatrix * vPosition;
+            fColor = vColor;
+        }
+    </script>
+    <script id="fragment-shader" type="x-shader/x-fragment">
+        precision mediump float;
+        varying vec4 fColor;
+        void main() {
+            gl_FragColor = fColor;
+        }
+    </script>
+    <script type="text/javascript" src="../Common/webgl-utils.js"></script>
+    <script type="text/javascript" src="../Common/InitShaders.js"></script>
+    <script type="text/javascript" src="../Common/MV.js"></script>
+    <script type="text/javascript" src="Portal_4.js"></script>
+    <script type="text/javascript">
+        var gl;
+        var points = [];
+        var colors = [];
+
+        var rotationX = -15;
+        var rotationY = 5;
+        var zoom = 1.0;
+
+        var isDragging = false;
+        var previousMouseX = 0;
+        var previousMouseY = 0;
+
+        var modelViewMatrixLoc;
+        var projectionMatrixLoc;
+        var vertexCount = 0;
+
+        function buildScene() {
+            createSnowField();
+            createSnowCliffs();
+            createSnowRocks();
+            createPortalLightBeam();
+        }
+
+        function setupCanvasInteractions(canvas) {
+            canvas.addEventListener("mousedown", function (event) {
+                isDragging = true;
+                previousMouseX = event.clientX;
+                previousMouseY = event.clientY;
+            });
+
+            canvas.addEventListener("mousemove", function (event) {
+                if (!isDragging) {
+                    return;
+                }
+                var deltaX = event.clientX - previousMouseX;
+                var deltaY = event.clientY - previousMouseY;
+                rotationY += deltaX * 0.5;
+                rotationX += deltaY * 0.5;
+                previousMouseX = event.clientX;
+                previousMouseY = event.clientY;
+            });
+
+            canvas.addEventListener("mouseup", function () {
+                isDragging = false;
+            });
+
+            canvas.addEventListener("mouseleave", function () {
+                isDragging = false;
+            });
+
+            canvas.addEventListener("wheel", function (event) {
+                event.preventDefault();
+                if (event.deltaY < 0) {
+                    zoom *= 1.1;
+                } else {
+                    zoom *= 0.9;
+                }
+                zoom = Math.max(0.3, Math.min(zoom, 3.0));
+            }, { passive: false });
+        }
+
+        function initializeScene() {
+            var canvas = document.getElementById("gl-canvas");
+            gl = WebGLUtils.setupWebGL(canvas);
+            if (!gl) {
+                alert("WebGL isn't available");
+                return;
+            }
+
+            points = [];
+            colors = [];
+            buildScene();
+            vertexCount = points.length;
+
+            gl.viewport(0, 0, canvas.width, canvas.height);
+            gl.clearColor(0.10, 0.12, 0.18, 1.0);
+            gl.enable(gl.DEPTH_TEST);
+            gl.enable(gl.BLEND);
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+            var program = initShaders(gl, "vertex-shader", "fragment-shader");
+            gl.useProgram(program);
+
+            var cBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW);
+            var vColor = gl.getAttribLocation(program, "vColor");
+            gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(vColor);
+
+            var vBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
+            var vPosition = gl.getAttribLocation(program, "vPosition");
+            gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(vPosition);
+
+            modelViewMatrixLoc = gl.getUniformLocation(program, "modelViewMatrix");
+            projectionMatrixLoc = gl.getUniformLocation(program, "projectionMatrix");
+
+            setupCanvasInteractions(canvas);
+            render();
+        }
+
+        function render() {
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+            var modelViewMatrix = mat4();
+            modelViewMatrix = mult(modelViewMatrix, rotate(rotationY, vec3(0, 1, 0)));
+            modelViewMatrix = mult(modelViewMatrix, rotate(rotationX, vec3(1, 0, 0)));
+
+            var zoomFactor = 1.0 / zoom;
+            var projectionMatrix = ortho(-zoomFactor, zoomFactor, -zoomFactor, zoomFactor, -6.0, 6.0);
+
+            gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
+            gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix));
+
+            gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
+
+            requestAnimFrame(render);
+        }
+
+        window.onload = initializeScene;
+    </script>
+</head>
+<body>
+    <canvas id="gl-canvas" width="2048" height="2048">
+        Oops ... your browser doesn't support the HTML5 canvas element
+    </canvas>
+</body>
+</html>
