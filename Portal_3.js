@@ -11,11 +11,6 @@
         points.push(v4); colors.push(color);
     }
 
-    /** 색상에 배율을 적용(밝기 조정) */
-    function scaleColor(color, factor) {
-        return vec4(color[0] * factor, color[1] * factor, color[2] * factor, color[3]);
-    }
-
     /** 사각형에 각 꼭짓점별 색상을 지정해 push */
     function emitQuadColored(v1, c1, v2, c2, v3, c3, v4, c4) {
         points.push(v1); colors.push(c1);
@@ -136,6 +131,38 @@
         }
     }
 
+    function createClothBetweenPlatforms(x1, y1, z1, x2, y2, z2, platformSize, platformThickness, clothWidth, color) {
+        // Derive platform edge points and emit a single cloth strip between them.
+        var dirX = x2 - x1;
+        var dirY = y2 - y1;
+        var dirZ = z2 - z1;
+        var dirLength = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
+        if (dirLength < 0.0001) {
+            return;
+        }
+        var normDirX = dirX / dirLength;
+        var normDirY = dirY / dirLength;
+        var normDirZ = dirZ / dirLength;
+        var edge1X = x1 + normDirX * platformSize;
+        var edge1Y = y1 + normDirY * platformSize + platformThickness;
+        var edge1Z = z1 + normDirZ * platformSize;
+        var edge2X = x2 - normDirX * platformSize;
+        var edge2Y = y2 - normDirY * platformSize + platformThickness;
+        var edge2Z = z2 - normDirZ * platformSize;
+        var perpX = -normDirZ;
+        var perpZ = normDirX;
+        var perpLength = Math.sqrt(perpX * perpX + perpZ * perpZ);
+        if (perpLength > 0.0001) {
+            perpX /= perpLength;
+            perpZ /= perpLength;
+        }
+        var p1 = vec4(edge1X - perpX * clothWidth, edge1Y, edge1Z - perpZ * clothWidth, 1.0);
+        var p2 = vec4(edge1X + perpX * clothWidth, edge1Y, edge1Z + perpZ * clothWidth, 1.0);
+        var p3 = vec4(edge2X + perpX * clothWidth, edge2Y, edge2Z + perpZ * clothWidth, 1.0);
+        var p4 = vec4(edge2X - perpX * clothWidth, edge2Y, edge2Z - perpZ * clothWidth, 1.0);
+        emitQuad(p1, p2, p3, p4, color);
+    }
+
     function createTowerCloths() {
         // Connect neighboring platforms with draped cloth strips.
         var clothColor = vec4(0.7, 0.25, 0.25, 1.0);
@@ -160,33 +187,14 @@
             var z2 = platformDistance * Math.sin(angle2) + centerZ;
             var clothWidth = 0.04;
             var platformThickness = 0.02;
-            var dirX = x2 - x1;
-            var dirY = y2 - y1;
-            var dirZ = z2 - z1;
-            var dirLength = Math.sqrt(dirX * dirX + dirY * dirY + dirZ * dirZ);
-            var normDirX = dirX / dirLength;
-            var normDirY = dirY / dirLength;
-            var normDirZ = dirZ / dirLength;
-            var edgeOffset1 = platformSize;
-            var edgeOffset2 = platformSize;
-            var edge1X = x1 + normDirX * edgeOffset1;
-            var edge1Y = y1 + normDirY * edgeOffset1 + platformThickness;
-            var edge1Z = z1 + normDirZ * edgeOffset1;
-            var edge2X = x2 - normDirX * edgeOffset2;
-            var edge2Y = y2 - normDirY * edgeOffset2 + platformThickness;
-            var edge2Z = z2 - normDirZ * edgeOffset2;
-            var perpX = -normDirZ;
-            var perpZ = normDirX;
-            var perpLength = Math.sqrt(perpX * perpX + perpZ * perpZ);
-            if (perpLength > 0.001) {
-                perpX /= perpLength;
-                perpZ /= perpLength;
-            }
-            var p1 = vec4(edge1X - perpX * clothWidth, edge1Y, edge1Z - perpZ * clothWidth, 1.0);
-            var p2 = vec4(edge1X + perpX * clothWidth, edge1Y, edge1Z + perpZ * clothWidth, 1.0);
-            var p3 = vec4(edge2X + perpX * clothWidth, edge2Y, edge2Z + perpZ * clothWidth, 1.0);
-            var p4 = vec4(edge2X - perpX * clothWidth, edge2Y, edge2Z - perpZ * clothWidth, 1.0);
-            emitQuad(p1, p2, p3, p4, clothColor);
+            createClothBetweenPlatforms(
+                x1, y1, z1,
+                x2, y2, z2,
+                platformSize,
+                platformThickness,
+                clothWidth,
+                clothColor
+            );
         }
     }
 
