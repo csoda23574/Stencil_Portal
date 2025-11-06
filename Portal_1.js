@@ -1,5 +1,9 @@
 (function (global) {
     // 사막 포털에 필요한 지형과 연출(사구, 피라미드, 태양, 천)을 생성.
+    /**
+     * 사구 하나 생성
+     * centerX/baseY/centerZ를 중심으로 width, height를 가진 반구형 사구를 만든다.
+     */
     function createDune(centerX, baseY, centerZ, width, height, sandColor) {
     // 다층 링을 쌓아 반구 형태 사구를 만들고 높이에 따라 색을 살짝 다르게 적용.
         var segments = 25;
@@ -49,6 +53,7 @@
         }
     }
 
+    /** 여러 사구 배치: 화면 전경을 다양한 크기의 사구로 채운다 */
     function createDesertDunes() {
     // 전경을 풍성하게 하기 위해 여러 개의 사구를 배치.
         createDune(-0.3, -0.5, -0.2, 0.4, 0.15, vec4(0.95, 0.75, 0.45, 1.0));
@@ -56,28 +61,36 @@
         createDune(0.0, -0.5, 0.1, 0.35, 0.12, vec4(0.98, 0.80, 0.50, 1.0));
     }
 
+    /** 정상이 갈라진 산 생성: 전경의 중심 구조물 */
     function createMountain() {
-    // 저니 분위기의 갈라진 탑을 표현하기 위해 절개된 피라미드를 생성.
-        var baseY = -0.5;
-        var centerZ = -0.45;
-        var baseWidth = 0.5;
-        var totalHeight = 0.6;
-        var topGap = 0.005;
-        var splitRatio = 0.9;
-        var color = vec4(0.65, 0.55, 0.40, 1.0);
-        var brightColor = vec4(color[0] * 1.1, color[1] * 1.1, color[2] * 1.1, 1.0);
-        var darkColor = vec4(color[0] * 0.8, color[1] * 0.8, color[2] * 0.8, 1.0);
-        var splitHeight = totalHeight * splitRatio;
-        var splitY = baseY + splitHeight;
-        var splitWidth = baseWidth * (1.0 - splitRatio);
-        var base1 = vec4(-baseWidth / 2, baseY, centerZ + baseWidth / 2, 1.0);
-        var base2 = vec4(baseWidth / 2, baseY, centerZ + baseWidth / 2, 1.0);
-        var base3 = vec4(baseWidth / 2, baseY, centerZ - baseWidth / 2, 1.0);
-        var base4 = vec4(-baseWidth / 2, baseY, centerZ - baseWidth / 2, 1.0);
-        var split1 = vec4(-splitWidth / 2, splitY, centerZ + splitWidth / 2, 1.0);
-        var split2 = vec4(splitWidth / 2, splitY, centerZ + splitWidth / 2, 1.0);
-        var split3 = vec4(splitWidth / 2, splitY, centerZ - splitWidth / 2, 1.0);
-        var split4 = vec4(-splitWidth / 2, splitY, centerZ - splitWidth / 2, 1.0);
+        // 지오메트리 파라미터
+        var baseY = -0.5;           // 산 바닥면의 Y 높이(평면 위치)
+        var centerZ = -0.45;        // 산의 Z 중심(카메라로부터의 거리 조절)
+        var baseWidth = 0.5;        // 바닥 정사각형의 한 변 길이(산 밑변 너비)
+        var totalHeight = 0.6;      // 바닥에서 정상까지의 전체 높이
+        var topGap = 0.0075;         // 정상의 좌/우가 갈라지는 틈 간격(좌우 꼭짓점 x 오프셋)
+        var splitRatio = 0.9;       // 정상 분리(갈라짐)가 시작되는 비율(0~1, 1에 가까울수록 꼭대기 근처)
+
+        // 색상(면 조명 느낌 연출을 위한 밝고/어두운 변형)
+        var color = vec4(0.65, 0.55, 0.40, 1.0);                                       // 기본 토색
+        var brightColor = vec4(color[0] * 1.1, color[1] * 1.1, color[2] * 1.1, 1.0);   // 밝은 면(빛 받는 면)
+        var darkColor = vec4(color[0] * 0.8, color[1] * 0.8, color[2] * 0.8, 1.0);     // 어두운 면(그늘진 면)
+
+        // 분리되는 단면(상단 잘린 지점)의 높이/크기
+        var splitHeight = totalHeight * splitRatio;   // 갈라짐 높이(바닥 기준)
+        var splitY = baseY + splitHeight;             // 갈라짐이 발생하는 Y 좌표
+        var splitWidth = baseWidth * (1.0 - splitRatio); // 갈라진 단면의 정사각형 한 변(상단으로 갈수록 축소)
+
+        // 하부 몸체(바닥 정사각형 → 분리 단면 정사각형) 4면을 이루는 꼭짓점들
+        var base1 = vec4(-baseWidth / 2, baseY, centerZ + baseWidth / 2, 1.0);  // 바닥 정사각형 1번 꼭짓점(좌-앞)
+        var base2 = vec4(baseWidth / 2, baseY, centerZ + baseWidth / 2, 1.0);   // 바닥 정사각형 2번 꼭짓점(우-앞)
+        var base3 = vec4(baseWidth / 2, baseY, centerZ - baseWidth / 2, 1.0);   // 바닥 정사각형 3번 꼭짓점(우-뒤)
+        var base4 = vec4(-baseWidth / 2, baseY, centerZ - baseWidth / 2, 1.0);  // 바닥 정사각형 4번 꼭짓점(좌-뒤)
+        var split1 = vec4(-splitWidth / 2, splitY, centerZ + splitWidth / 2, 1.0); // 분리 단면 1번 꼭짓점(좌-앞)
+        var split2 = vec4(splitWidth / 2, splitY, centerZ + splitWidth / 2, 1.0);  // 분리 단면 2번 꼭짓점(우-앞)
+        var split3 = vec4(splitWidth / 2, splitY, centerZ - splitWidth / 2, 1.0);  // 분리 단면 3번 꼭짓점(우-뒤)
+        var split4 = vec4(-splitWidth / 2, splitY, centerZ - splitWidth / 2, 1.0); // 분리 단면 4번 꼭짓점(좌-뒤)
+
         points.push(base1); colors.push(brightColor);
         points.push(base2); colors.push(brightColor);
         points.push(split2); colors.push(brightColor);
@@ -102,11 +115,18 @@
         points.push(base4); colors.push(color);
         points.push(split1); colors.push(color);
         points.push(split4); colors.push(color);
-        var apex_L = vec4(-topGap / 2, baseY + totalHeight, centerZ, 1.0);
-        var base_L1 = vec4(-topGap / 2, splitY, centerZ + splitWidth / 2, 1.0);
-        var base_L2 = vec4(-splitWidth / 2, splitY, centerZ + splitWidth / 2, 1.0);
-        var base_L3 = vec4(-splitWidth / 2, splitY, centerZ - splitWidth / 2, 1.0);
-        var base_L4 = vec4(-topGap / 2, splitY, centerZ - splitWidth / 2, 1.0);
+    // 좌우 꼭대기 높이 각각 다르게(flatRatio_L, flatRatio_R)
+    var flatRatio_L = 0.96; // 좌측 꼭대기 평평 비율
+    var flatRatio_R = 0.95; // 우측 꼭대기 평평 비율
+    // 꼭대기 갈라진 틈(topGap)을 평평함에 따라 자동으로 넓게 조정
+    var topGap = 0.005 + (1 - Math.min(flatRatio_L, flatRatio_R)) * 0.04; // 평평할수록 더 넓게
+
+    // 좌측 꼭대기점 및 밑변 점들
+    var apex_L = vec4(-topGap / 2, baseY + totalHeight * flatRatio_L, centerZ, 1.0);   // 좌측 꼭대기점(평평하게)
+    var base_L1 = vec4(-topGap / 2, splitY, centerZ + splitWidth / 2, 1.0);            // 좌측 상단 단면의 앞쪽 중앙
+    var base_L2 = vec4(-splitWidth / 2, splitY, centerZ + splitWidth / 2, 1.0);        // 좌측 상단 단면의 좌-앞 꼭짓점
+    var base_L3 = vec4(-splitWidth / 2, splitY, centerZ - splitWidth / 2, 1.0);        // 좌측 상단 단면의 좌-뒤 꼭짓점
+    var base_L4 = vec4(-topGap / 2, splitY, centerZ - splitWidth / 2, 1.0);            // 좌측 상단 단면의 뒤쪽 중앙
         points.push(apex_L); colors.push(brightColor);
         points.push(base_L1); colors.push(brightColor);
         points.push(base_L2); colors.push(brightColor);
@@ -119,11 +139,12 @@
         points.push(apex_L); colors.push(color);
         points.push(base_L4); colors.push(color);
         points.push(base_L1); colors.push(color);
-        var apex_R = vec4(topGap / 2, baseY + totalHeight, centerZ, 1.0);
-        var base_R1 = vec4(topGap / 2, splitY, centerZ + splitWidth / 2, 1.0);
-        var base_R2 = vec4(splitWidth / 2, splitY, centerZ + splitWidth / 2, 1.0);
-        var base_R3 = vec4(splitWidth / 2, splitY, centerZ - splitWidth / 2, 1.0);
-        var base_R4 = vec4(topGap / 2, splitY, centerZ - splitWidth / 2, 1.0);
+    // 우측 꼭대기점 및 밑변 점들
+    var apex_R = vec4(topGap / 2, baseY + totalHeight * flatRatio_R, centerZ, 1.0);    // 우측 꼭대기점(평평하게)
+    var base_R1 = vec4(topGap / 2, splitY, centerZ + splitWidth / 2, 1.0);             // 우측 상단 단면의 앞쪽 중앙
+    var base_R2 = vec4(splitWidth / 2, splitY, centerZ + splitWidth / 2, 1.0);         // 우측 상단 단면의 우-앞 꼭짓점
+    var base_R3 = vec4(splitWidth / 2, splitY, centerZ - splitWidth / 2, 1.0);         // 우측 상단 단면의 우-뒤 꼭짓점
+    var base_R4 = vec4(topGap / 2, splitY, centerZ - splitWidth / 2, 1.0);             // 우측 상단 단면의 뒤쪽 중앙
         points.push(apex_R); colors.push(brightColor);
         points.push(base_R2); colors.push(brightColor);
         points.push(base_R1); colors.push(brightColor);
@@ -138,6 +159,7 @@
         points.push(base_R4); colors.push(color);
     }
 
+    /** 모래폭풍 입자 생성: 알파 블렌딩 사각형 파티클 */
     function createDesertSandstorm() {
     // 포털 앞에 alpha 블렌딩된 사각형 입자를 뿌려 모래바람을 표현.
         var particleCount = 150;
@@ -168,14 +190,17 @@
         }
     }
 
+    /** 천 장식 묶음 생성: 포털 주변에 3개의 천을 띄운다 */
     function createDesertCloth() {
         createFloatingCloth(-0.2, -0.1, 0.0, 0);
         createFloatingCloth(0.15, 0.0, -0.1, 1);
         createFloatingCloth(-0.1, 0.15, 0.15, 2);
     }
-
+ 
+    /** 단일 천 조각 생성: 사인파 기반으로 물결치는 천 스트립 */
     function createFloatingCloth(x, y, z, index) {
     // 천 조각마다 위상 편차를 주어 물결이 동시에 움직이지 않도록 처리.
+        /*
         var clothColor = vec4(0.85, 0.15, 0.15, 1.0);
         var darkClothColor = vec4(0.65, 0.10, 0.10, 1.0);
         var segments = 15;
@@ -218,8 +243,9 @@
             points.push(vec4(x1_left, y1, z1, 1.0));
             colors.push(darkClothColor);
         }
+        */
     }
-
+    /** 태양 생성: 본체 구와 후광 껍질을 함께 만든다 */
     function createDesertSun() {
     // 태양 본체와 반투명 광휘 껍질을 조합해 빛나는 효과를 구현.
         var sunX = 0.0;
@@ -234,6 +260,7 @@
         createSunGlow(sunX, sunY, sunZ, coreRadius, glowRadius, latBands, longBands);
     }
 
+    /** 구(태양 코어) 생성: 위도/경도 분할로 트라이앵글 메쉬 생성 */
     function createSunSphere(centerX, centerY, centerZ, radius, color, latBands, longBands) {
     // 위도-경도 분할 방식으로 구를 생성하는 전형적인 WebGL 접근.
         for (var lat = 0; lat < latBands; lat++) {
@@ -278,6 +305,7 @@
         }
     }
 
+    /** 태양 후광 생성: 내/외반지름으로 부드러운 광휘 */
     function createSunGlow(centerX, centerY, centerZ, innerRadius, outerRadius, latBands, longBands) {
     // 두 개의 반지를 사용해 번갈아가며 색을 배치하고 부드러운 후광을 만든다.
         for (var lat = 0; lat < latBands; lat++) {

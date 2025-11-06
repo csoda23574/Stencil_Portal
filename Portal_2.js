@@ -1,5 +1,158 @@
 (function (global) {
     // 폐허 포털의 기둥, 아치, 수호자, 광입자를 생성하는 도우미.
+
+    /** 사각형 두 개의 삼각형으로 분리해 push */
+    function emitQuad(v1, v2, v3, v4, color) {
+        points.push(v1); colors.push(color);
+        points.push(v2); colors.push(color);
+        points.push(v3); colors.push(color);
+        points.push(v1); colors.push(color);
+        points.push(v3); colors.push(color);
+        points.push(v4); colors.push(color);
+    }
+
+    /** 색상에 배율을 적용(밝기 조정) */
+    function scaleColor(color, factor) {
+        return vec4(color[0] * factor, color[1] * factor, color[2] * factor, color[3]);
+    }
+
+    function resolveFaceColor(faceColors, key, fallback) {
+        if (!faceColors) {
+            return fallback;
+        }
+        if (faceColors.length !== undefined && faceColors.length === 4) {
+            return faceColors;
+        }
+        if (faceColors[key]) {
+            return faceColors[key];
+        }
+        if (faceColors.default) {
+            return faceColors.default;
+        }
+        return fallback;
+    }
+
+    /**
+     * 직육면체 생성: (x, y, z)는 중심
+     * length: X축 길이, width: Z축 길이, height: Y축 길이, scale: 전체 스케일
+     * faceColors는 {positiveX, negativeX, positiveY, negativeY, positiveZ, negativeZ, default} 구조의 색상 선택(선택사항)
+     */
+    function createHexahedron(x, y, z, length, width, height, scale, faceColors) {
+        var s = scale || 1.0;
+        var halfLength = (length * s) / 2;
+        var halfWidth = (width * s) / 2;
+        var halfHeight = (height * s) / 2;
+        var defaultColor = faceColors && faceColors.default ? faceColors.default : vec4(1.0, 1.0, 1.0, 1.0);
+
+        var front = resolveFaceColor(faceColors, "positiveZ", defaultColor);
+        var back = resolveFaceColor(faceColors, "negativeZ", defaultColor);
+        var right = resolveFaceColor(faceColors, "positiveX", defaultColor);
+        var left = resolveFaceColor(faceColors, "negativeX", defaultColor);
+        var top = resolveFaceColor(faceColors, "positiveY", defaultColor);
+        var bottom = resolveFaceColor(faceColors, "negativeY", defaultColor);
+
+        // +Z 면
+        emitQuad(
+            vec4(x - halfLength, y - halfHeight, z + halfWidth, 1.0),
+            vec4(x + halfLength, y - halfHeight, z + halfWidth, 1.0),
+            vec4(x + halfLength, y + halfHeight, z + halfWidth, 1.0),
+            vec4(x - halfLength, y + halfHeight, z + halfWidth, 1.0),
+            front
+        );
+        // -Z 면
+        emitQuad(
+            vec4(x + halfLength, y - halfHeight, z - halfWidth, 1.0),
+            vec4(x - halfLength, y - halfHeight, z - halfWidth, 1.0),
+            vec4(x - halfLength, y + halfHeight, z - halfWidth, 1.0),
+            vec4(x + halfLength, y + halfHeight, z - halfWidth, 1.0),
+            back
+        );
+        // +X 면
+        emitQuad(
+            vec4(x + halfLength, y - halfHeight, z + halfWidth, 1.0),
+            vec4(x + halfLength, y - halfHeight, z - halfWidth, 1.0),
+            vec4(x + halfLength, y + halfHeight, z - halfWidth, 1.0),
+            vec4(x + halfLength, y + halfHeight, z + halfWidth, 1.0),
+            right
+        );
+        // -X 면
+        emitQuad(
+            vec4(x - halfLength, y - halfHeight, z - halfWidth, 1.0),
+            vec4(x - halfLength, y - halfHeight, z + halfWidth, 1.0),
+            vec4(x - halfLength, y + halfHeight, z + halfWidth, 1.0),
+            vec4(x - halfLength, y + halfHeight, z - halfWidth, 1.0),
+            left
+        );
+        // +Y 면
+        emitQuad(
+            vec4(x - halfLength, y + halfHeight, z + halfWidth, 1.0),
+            vec4(x + halfLength, y + halfHeight, z + halfWidth, 1.0),
+            vec4(x + halfLength, y + halfHeight, z - halfWidth, 1.0),
+            vec4(x - halfLength, y + halfHeight, z - halfWidth, 1.0),
+            top
+        );
+        // -Y 면
+        emitQuad(
+            vec4(x - halfLength, y - halfHeight, z - halfWidth, 1.0),
+            vec4(x + halfLength, y - halfHeight, z - halfWidth, 1.0),
+            vec4(x + halfLength, y - halfHeight, z + halfWidth, 1.0),
+            vec4(x - halfLength, y - halfHeight, z + halfWidth, 1.0),
+            bottom
+        );
+    }
+
+    /**
+     * 육각 기둥 생성: (x, y, z)는 중심, height는 전체 높이, scale은 반지름(가로 크기)
+     * colorOption(선택): {base, bright, dark, top, bottom}
+     */
+    function createPrism(x, y, z, height, scale, colorOption) {
+        var radius = scale || 0.1;
+        var halfHeight = height / 2;
+        var bottomY = y - halfHeight;
+        var topY = y + halfHeight;
+
+        var baseColor = (colorOption && (colorOption.base || colorOption.default)) || vec4(0.35, 0.30, 0.25, 1.0);
+        var brightColor = (colorOption && colorOption.bright) || scaleColor(baseColor, 1.1);
+        var darkColor = (colorOption && colorOption.dark) || scaleColor(baseColor, 0.7);
+        var topColor = (colorOption && colorOption.top) || brightColor;
+        var bottomColor = (colorOption && colorOption.bottom) || darkColor;
+
+        var sides = 6;
+        for (var i = 0; i < sides; i++) {
+            var angle1 = (i / sides) * 2 * Math.PI;
+            var angle2 = ((i + 1) / sides) * 2 * Math.PI;
+            var midAngle = (angle1 + angle2) / 2;
+            var x1 = x + radius * Math.cos(angle1);
+            var z1 = z + radius * Math.sin(angle1);
+            var x2 = x + radius * Math.cos(angle2);
+            var z2 = z + radius * Math.sin(angle2);
+            var sideShade = Math.cos(midAngle) > 0 ? brightColor : darkColor;
+            emitQuad(
+                vec4(x1, bottomY, z1, 1.0),
+                vec4(x2, bottomY, z2, 1.0),
+                vec4(x2, topY, z2, 1.0),
+                vec4(x1, topY, z1, 1.0),
+                sideShade
+            );
+        }
+
+        for (var j = 0; j < sides; j++) {
+            var angleTop1 = (j / sides) * 2 * Math.PI;
+            var angleTop2 = ((j + 1) / sides) * 2 * Math.PI;
+            var xTop1 = x + radius * Math.cos(angleTop1);
+            var zTop1 = z + radius * Math.sin(angleTop1);
+            var xTop2 = x + radius * Math.cos(angleTop2);
+            var zTop2 = z + radius * Math.sin(angleTop2);
+            points.push(vec4(x, topY, z, 1.0)); colors.push(topColor);
+            points.push(vec4(xTop1, topY, zTop1, 1.0)); colors.push(topColor);
+            points.push(vec4(xTop2, topY, zTop2, 1.0)); colors.push(topColor);
+
+            points.push(vec4(x, bottomY, z, 1.0)); colors.push(bottomColor);
+            points.push(vec4(xTop2, bottomY, zTop2, 1.0)); colors.push(bottomColor);
+            points.push(vec4(xTop1, bottomY, zTop1, 1.0)); colors.push(bottomColor);
+        }
+    }
+    /** 여러 개의 폐허 기둥을 서로 다른 파라미터로 생성 */
     function createRuinsPillars() {
     // 높이와 색이 조금씩 다른 부서진 기둥들을 묶음으로 배치.
         var pillarColor1 = vec4(0.35, 0.30, 0.25, 1.0);
@@ -12,40 +165,21 @@
         createPillar(-0.1, -0.5, 0.15, 0.045, 0.15, pillarColor2);
     }
 
+    /** 단일 기둥 생성: 육각 기둥으로 간소화 */
     function createPillar(x, baseY, z, radius, height, color) {
-    // 단순 조명을 표현하기 위해 저폴리 기둥을 만들고 면마다 명암을 준다.
-        var segments = 12;
-        var darkColor = vec4(color[0] * 0.7, color[1] * 0.7, color[2] * 0.7, 1.0);
-        var topY = baseY + height;
-        for (var i = 0; i < segments; i++) {
-            var theta1 = (i / segments) * 2 * Math.PI;
-            var theta2 = ((i + 1) / segments) * 2 * Math.PI;
-            var x1 = x + radius * Math.cos(theta1);
-            var z1 = z + radius * Math.sin(theta1);
-            var x2 = x + radius * Math.cos(theta2);
-            var z2 = z + radius * Math.sin(theta2);
-            var sideColor = (i < segments / 2) ? color : darkColor;
-            points.push(vec4(x1, baseY, z1, 1.0)); colors.push(sideColor);
-            points.push(vec4(x1, topY, z1, 1.0)); colors.push(sideColor);
-            points.push(vec4(x2, topY, z2, 1.0)); colors.push(sideColor);
-            points.push(vec4(x1, baseY, z1, 1.0)); colors.push(sideColor);
-            points.push(vec4(x2, topY, z2, 1.0)); colors.push(sideColor);
-            points.push(vec4(x2, baseY, z2, 1.0)); colors.push(sideColor);
-        }
-        var center = vec4(x, topY, z, 1.0);
-        for (var j = 0; j < segments; j++) {
-            var t1 = (j / segments) * 2 * Math.PI;
-            var t2 = ((j + 1) / segments) * 2 * Math.PI;
-            var xTop1 = x + radius * Math.cos(t1);
-            var zTop1 = z + radius * Math.sin(t1);
-            var xTop2 = x + radius * Math.cos(t2);
-            var zTop2 = z + radius * Math.sin(t2);
-            points.push(center); colors.push(color);
-            points.push(vec4(xTop1, topY, zTop1, 1.0)); colors.push(color);
-            points.push(vec4(xTop2, topY, zTop2, 1.0)); colors.push(color);
-        }
+    // 공용 육각 기둥 헬퍼를 사용해 기둥을 구성한다.
+        var centerY = baseY + height / 2;
+        var colorOption = {
+            base: color,
+            bright: scaleColor(color, 1.1),
+            dark: scaleColor(color, 0.7),
+            top: scaleColor(color, 1.05),
+            bottom: scaleColor(color, 0.65)
+        };
+        createPrism(x, centerY, z, height, radius, colorOption);
     }
 
+    /** 아치 생성: 양쪽 기둥과 상부 곡선 보를 결합 */
     function createRuinsArch() {
     // 두 개의 기둥과 곡선 상인방으로 이루어진 아치를 구성.
         var archColor = vec4(0.38, 0.32, 0.28, 1.0);
@@ -61,49 +195,22 @@
         createArchTop(centerX, baseY + height * 0.8, centerZ, width, height * 0.2, thickness, archColor, darkArchColor);
     }
 
+    /** 아치 기둥 한쪽 생성(직육면체 기둥) */
     function createArchPillar(x, baseY, z, width, height, color, darkColor) {
-    // 직육면체를 돌출시키며 면마다 밝기 차이를 둔다.
-        var halfW = width / 2;
-        var v1 = vec4(x - halfW, baseY, z - halfW, 1.0);
-        var v2 = vec4(x - halfW, baseY, z + halfW, 1.0);
-        var v3 = vec4(x + halfW, baseY, z + halfW, 1.0);
-        var v4 = vec4(x + halfW, baseY, z - halfW, 1.0);
-        var v5 = vec4(x - halfW, baseY + height, z - halfW, 1.0);
-        var v6 = vec4(x - halfW, baseY + height, z + halfW, 1.0);
-        var v7 = vec4(x + halfW, baseY + height, z + halfW, 1.0);
-        var v8 = vec4(x + halfW, baseY + height, z - halfW, 1.0);
-        points.push(v1); colors.push(color);
-        points.push(v5); colors.push(color);
-        points.push(v6); colors.push(color);
-        points.push(v1); colors.push(color);
-        points.push(v6); colors.push(color);
-        points.push(v2); colors.push(color);
-        points.push(v4); colors.push(darkColor);
-        points.push(v3); colors.push(darkColor);
-        points.push(v7); colors.push(darkColor);
-        points.push(v4); colors.push(darkColor);
-        points.push(v7); colors.push(darkColor);
-        points.push(v8); colors.push(darkColor);
-        points.push(v1); colors.push(color);
-        points.push(v4); colors.push(color);
-        points.push(v8); colors.push(color);
-        points.push(v1); colors.push(color);
-        points.push(v8); colors.push(color);
-        points.push(v5); colors.push(color);
-        points.push(v2); colors.push(color);
-        points.push(v6); colors.push(color);
-        points.push(v7); colors.push(color);
-        points.push(v2); colors.push(color);
-        points.push(v7); colors.push(color);
-        points.push(v3); colors.push(color);
-        points.push(v5); colors.push(color);
-        points.push(v6); colors.push(color);
-        points.push(v7); colors.push(color);
-        points.push(v5); colors.push(color);
-        points.push(v7); colors.push(color);
-        points.push(v8); colors.push(color);
+    // 공용 hexahedron 생성기로 구성
+        var centerY = baseY + height / 2;
+        createHexahedron(x, centerY, z, width, width, height, 1.0, {
+            positiveX: darkColor,
+            negativeX: color,
+            positiveZ: color,
+            negativeZ: color,
+            positiveY: scaleColor(color, 1.05),
+            negativeY: scaleColor(color, 0.85),
+            default: color
+        });
     }
 
+    /** 아치 상단 곡선 보 생성: 반원 세그먼트로 근사 */
     function createArchTop(centerX, baseY, centerZ, width, height, thickness, color, darkColor) {
     // 반원을 여러 조각으로 나눠 곡면 상단을 근사한다.
         var segments = 8;
@@ -139,6 +246,7 @@
         }
     }
 
+    /** 폐허 주변의 빛 입자/먼지 생성(알파 블렌딩 사각형) 
     function createRuinsLight() {
     // 떠다니는 사각형으로 아치 주변의 먼지와 빛기둥을 표현.
         var particleCount = 80;
@@ -168,16 +276,19 @@
             points.push(v4); colors.push(particleColor);
         }
     }
+    */
 
+    /** 비행 수호자 전체 생성: 머리/몸통 세그먼트/지느러미 */
     function createRuinsGuardian() {
     // 폐허를 가로지르는 뱀 형태의 비행 수호자를 여러 세그먼트로 만든다.
         var segments = 12;
         var totalLength = 0.8;
         var segmentLength = totalLength / segments;
-        var baseZ = 0.0;
         var baseX = 0.4;
         var baseY = 0.05;
-        createGuardianHead(baseX, baseY, baseZ);
+        var baseZ = 0.0;
+
+        createGuardianHead(0.4, 0.07, 0.025);
         for (var i = 0; i < segments; i++) {
             var t = i / segments;
             var x = baseX - t * totalLength;
@@ -201,140 +312,90 @@
         createGuardianFins(baseX - totalLength * 0.6, baseY + 0.02, baseZ, 0.25);
     }
 
+    /** 수호자 몸체의 캡슐형 세그먼트 하나 생성 */
     function createGuardianSegment(centerX, centerY, centerZ, length, width, height) {
-    // 윤곽 조명을 넣어 곡면감을 살린 캡슐형 세그먼트를 생성.
-        var bodyColor = vec4(0.38, 0.32, 0.28, 1.0);
-        var darkBodyColor = vec4(0.25, 0.20, 0.16, 1.0);
-        var brightColor = vec4(0.45, 0.38, 0.32, 1.0);
-        var circleSegments = 8;
-        for (var s = 0; s < circleSegments; s++) {
-            var theta1 = (s / circleSegments) * 2 * Math.PI;
-            var theta2 = ((s + 1) / circleSegments) * 2 * Math.PI;
-            var y1_front = centerY + width * Math.cos(theta1);
-            var z1_front = centerZ + height * Math.sin(theta1);
-            var y2_front = centerY + width * Math.cos(theta2);
-            var z2_front = centerZ + height * Math.sin(theta2);
-            var backScale = 0.95;
-            var y1_back = centerY + width * backScale * Math.cos(theta1);
-            var z1_back = centerZ + height * backScale * Math.sin(theta1);
-            var y2_back = centerY + width * backScale * Math.cos(theta2);
-            var z2_back = centerZ + height * backScale * Math.sin(theta2);
-            var xFront = centerX - length / 2;
-            var xBack = centerX + length / 2;
-            var color;
-            if (theta1 < Math.PI * 0.4 || theta1 > Math.PI * 1.6) {
-                color = brightColor;
-            } else if (theta1 > Math.PI * 0.6 && theta1 < Math.PI * 1.4) {
-                color = darkBodyColor;
-            } else {
-                color = bodyColor;
-            }
-            points.push(vec4(xFront, y1_front, z1_front, 1.0)); colors.push(color);
-            points.push(vec4(xBack, y1_back, z1_back, 1.0)); colors.push(color);
-            points.push(vec4(xBack, y2_back, z2_back, 1.0)); colors.push(color);
-            points.push(vec4(xFront, y1_front, z1_front, 1.0)); colors.push(color);
-            points.push(vec4(xBack, y2_back, z2_back, 1.0)); colors.push(color);
-            points.push(vec4(xFront, y2_front, z2_front, 1.0)); colors.push(color);
-        }
+    // 몸체 파츠를 직육면체(박스) 헬퍼로 생성
+    // 공포스러운 검회색 계열로 변경
+    var bodyColor = vec4(0.18, 0.19, 0.22, 1.0);      // 기본 검회색
+    var darkBodyColor = vec4(0.10, 0.11, 0.13, 1.0);  // 더 어두운 검회색
+    var brightColor = vec4(0.28, 0.29, 0.32, 1.0);    // 밝은 회색(빛 받는 면)
+    var depth = height * 3.0;
+    createHexahedron(centerX, centerY, centerZ, length, depth, width, 1.0, {
+        positiveX: brightColor,
+        negativeX: darkBodyColor,
+        positiveZ: bodyColor,
+        negativeZ: scaleColor(bodyColor, 0.9),
+        positiveY: brightColor,
+        negativeY: darkBodyColor,
+        default: bodyColor
+    });
     }
 
+    /** 수호자 머리 생성: 테이퍼링되는 링으로 구성 */
     function createGuardianHead(centerX, centerY, centerZ) {
-    // 층층이 줄어드는 링을 사용해 수호자의 머리를 날렵하게 구성.
-        var headColor = vec4(0.40, 0.34, 0.30, 1.0);
-        var darkHeadColor = vec4(0.28, 0.22, 0.18, 1.0);
-        var brightHeadColor = vec4(0.48, 0.40, 0.34, 1.0);
-        var headLength = 0.10;
-        var headBaseWidth = 0.08;
-        var segments = 6;
-        var rings = 5;
-        for (var r = 0; r < rings; r++) {
-            var t1 = r / rings;
-            var t2 = (r + 1) / rings;
-            var scale1 = 1.0 - t1 * t1;
-            var scale2 = 1.0 - t2 * t2;
-            var x1 = centerX - t1 * headLength;
-            var x2 = centerX - t2 * headLength;
-            for (var s = 0; s < segments; s++) {
-                var theta1 = (s / segments) * 2 * Math.PI;
-                var theta2 = ((s + 1) / segments) * 2 * Math.PI;
-                var zScale1_1 = Math.sin(theta1) > 0 ? 1.3 : 0.5;
-                var zScale1_2 = Math.sin(theta2) > 0 ? 1.3 : 0.5;
-                var y1_1 = centerY + headBaseWidth * scale1 * Math.cos(theta1);
-                var z1_1 = centerZ + headBaseWidth * scale1 * zScale1_1 * Math.sin(theta1);
-                var y1_2 = centerY + headBaseWidth * scale1 * Math.cos(theta2);
-                var z1_2 = centerZ + headBaseWidth * scale1 * zScale1_2 * Math.sin(theta2);
-                var zScale2_1 = Math.sin(theta1) > 0 ? 1.3 : 0.5;
-                var zScale2_2 = Math.sin(theta2) > 0 ? 1.3 : 0.5;
-                var y2_1 = centerY + headBaseWidth * scale2 * Math.cos(theta1);
-                var z2_1 = centerZ + headBaseWidth * scale2 * zScale2_1 * Math.sin(theta1);
-                var y2_2 = centerY + headBaseWidth * scale2 * Math.cos(theta2);
-                var z2_2 = centerZ + headBaseWidth * scale2 * zScale2_2 * Math.sin(theta2);
-                var color;
-                if (theta1 < Math.PI * 0.3 || theta1 > Math.PI * 1.7) {
-                    color = brightHeadColor;
-                } else if (theta1 > Math.PI * 0.7 && theta1 < Math.PI * 1.3) {
-                    color = darkHeadColor;
-                } else {
-                    color = headColor;
-                }
-                points.push(vec4(x1, y1_1, z1_1, 1.0)); colors.push(color);
-                points.push(vec4(x2, y2_1, z2_1, 1.0)); colors.push(color);
-                points.push(vec4(x2, y2_2, z2_2, 1.0)); colors.push(color);
-                points.push(vec4(x1, y1_1, z1_1, 1.0)); colors.push(color);
-                points.push(vec4(x2, y2_2, z2_2, 1.0)); colors.push(color);
-                points.push(vec4(x1, y1_2, z1_2, 1.0)); colors.push(color);
-            }
-        }
-        var tipX = centerX - headLength;
-        var tipPoint = vec4(tipX, centerY, centerZ, 1.0);
-        for (var j = 0; j < segments; j++) {
-            var phi1 = (j / segments) * 2 * Math.PI;
-            var phi2 = ((j + 1) / segments) * 2 * Math.PI;
-            var zScaleTiny1 = Math.sin(phi1) > 0 ? 1.3 : 0.5;
-            var zScaleTiny2 = Math.sin(phi2) > 0 ? 1.3 : 0.5;
-            var y1 = centerY + headBaseWidth * 0.05 * Math.cos(phi1);
-            var z1 = centerZ + headBaseWidth * 0.05 * zScaleTiny1 * Math.sin(phi1);
-            var y2 = centerY + headBaseWidth * 0.05 * Math.cos(phi2);
-            var z2 = centerZ + headBaseWidth * 0.05 * zScaleTiny2 * Math.sin(phi2);
-            var headShade = (phi1 < Math.PI * 0.5 || phi1 > Math.PI * 1.5) ? brightHeadColor : darkHeadColor;
-            points.push(vec4(tipX + 0.01, y1, z1, 1.0)); colors.push(headShade);
-            points.push(tipPoint); colors.push(headShade);
-            points.push(vec4(tipX + 0.01, y2, z2, 1.0)); colors.push(headShade);
-        }
+    // 머리 파트를 직육면체(박스) 헬퍼로 생성
+    var headColor = vec4(0.18, 0.19, 0.22, 1.0);      // 기본 검회색
+    var darkHeadColor = vec4(0.10, 0.11, 0.13, 1.0);  // 더 어두운 검회색
+    var brightHeadColor = vec4(0.28, 0.29, 0.32, 1.0); // 밝은 회색(빛 받는 면)
+    var headLength = 0.10;
+    var headBaseWidth = 0.08;
+    var headDepthParam = 0.12;
+    var verticalHeight = headBaseWidth / 1.1;
+    var depth = (headDepthParam / 1.7) * 2.0;
+    createHexahedron(centerX, centerY, centerZ, headLength, depth, verticalHeight, 1.0, {
+        positiveX: brightHeadColor,
+        negativeX: darkHeadColor,
+        positiveZ: headColor,
+        negativeZ: scaleColor(headColor, 0.9),
+        positiveY: brightHeadColor,
+        negativeY: darkHeadColor,
+        default: headColor
+    });
     }
 
+    /** 수호자 지느러미 생성: 좌/우 얇은 삼각형 */
     function createGuardianFins(centerX, centerY, centerZ, finSpan) {
-    // 얇은 삼각형 쌍으로 움직임이 느껴지는 지느러미를 추가.
-        var finColor = vec4(0.35, 0.30, 0.26, 1.0);
-        var darkFinColor = vec4(0.22, 0.18, 0.14, 1.0);
-        var finLength = 0.10;
-        var finWidth = 0.04;
-        var leftTip = vec4(centerX - finLength, centerY - finWidth, centerZ - finSpan / 2, 1.0);
-        var leftBase1 = vec4(centerX, centerY + finWidth, centerZ - finWidth * 2, 1.0);
-        var leftBase2 = vec4(centerX, centerY - finWidth, centerZ - finWidth * 2, 1.0);
-        points.push(leftTip); colors.push(finColor);
-        points.push(leftBase1); colors.push(finColor);
-        points.push(leftBase2); colors.push(finColor);
-        points.push(leftTip); colors.push(darkFinColor);
-        points.push(leftBase2); colors.push(darkFinColor);
-        points.push(leftBase1); colors.push(darkFinColor);
-        var rightTip = vec4(centerX - finLength, centerY - finWidth, centerZ + finSpan / 2, 1.0);
-        var rightBase1 = vec4(centerX, centerY + finWidth, centerZ + finWidth * 2, 1.0);
-        var rightBase2 = vec4(centerX, centerY - finWidth, centerZ + finWidth * 2, 1.0);
-        points.push(rightTip); colors.push(finColor);
-        points.push(rightBase2); colors.push(finColor);
-        points.push(rightBase1); colors.push(finColor);
-        points.push(rightTip); colors.push(darkFinColor);
-        points.push(rightBase1); colors.push(darkFinColor);
-        points.push(rightBase2); colors.push(darkFinColor);
+    // 날개를 z축 방향으로 세운 직육면체로 생성
+    var wingColor = vec4(0.7, 0.8, 0.9, 0.5); // 밝은 푸른빛 반투명 날개
+    var wingLength = 0.07;  // 앞뒤로 더 짧게 (X축)
+    var wingWidth = 0.02;   // 두께(얇게, Y축)
+    var wingHeight = 0.22;  // 높이(더 길게, Z축)
+    var brightWing = scaleColor(wingColor, 1.05);
+    var darkWing = scaleColor(wingColor, 0.9);
+
+    var leftCenterX = centerX + wingLength / 2;
+    var leftCenterZ = centerZ - finSpan / 2;
+    createHexahedron(leftCenterX, centerY, leftCenterZ, wingLength, wingHeight, wingWidth, 1.0, {
+        positiveX: brightWing,
+        negativeX: darkWing,
+        positiveZ: wingColor,
+        negativeZ: wingColor,
+        positiveY: brightWing,
+        negativeY: darkWing,
+        default: wingColor
+    });
+
+    var rightCenterX = centerX + wingLength / 2;
+    var rightCenterZ = centerZ + finSpan / 2;
+    createHexahedron(rightCenterX, centerY, rightCenterZ, wingLength, wingHeight, wingWidth, 1.0, {
+        positiveX: brightWing,
+        negativeX: darkWing,
+        positiveZ: wingColor,
+        negativeZ: wingColor,
+        positiveY: brightWing,
+        negativeY: darkWing,
+        default: wingColor
+    });
     }
 
+    global.createHexahedron = createHexahedron;
+    global.createPrism = createPrism;
     global.createRuinsPillars = createRuinsPillars;
     global.createPillar = createPillar;
     global.createRuinsArch = createRuinsArch;
     global.createArchPillar = createArchPillar;
     global.createArchTop = createArchTop;
-    global.createRuinsLight = createRuinsLight;
+    // global.createRuinsLight = createRuinsLight;
     global.createRuinsGuardian = createRuinsGuardian;
     global.createGuardianSegment = createGuardianSegment;
     global.createGuardianHead = createGuardianHead;

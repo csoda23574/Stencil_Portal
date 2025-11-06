@@ -1,5 +1,6 @@
 (function (global) {
     // 타워 포털의 나선형 구조물, 플랫폼, 천, 수면, 내부 마스크를 생성.
+    /** 타워 본체 생성: 원통형에 장식 밴드와 상단 캡 포함 */
     function createTower() {
     // 원통형 타워 본체에 수평 장식을 두르고 명암을 부여.
         var towerColor1 = vec4(0.35, 0.30, 0.28, 1.0);
@@ -82,6 +83,7 @@
         }
     }
 
+    /** 나선형 플랫폼들 생성: 팔각 플랫폼들을 높이/각도 따라 배치 */
     function createTowerPlatforms() {
     // 외벽을 따라 감기는 나선형 팔각 플랫폼을 배치.
         var platformColor = vec4(0.25, 0.20, 0.18, 1.0);
@@ -104,6 +106,7 @@
         }
     }
 
+    /** 단일 팔각 플랫폼 생성(회전 포함) */
     function createOctagonPlatform(centerX, centerY, centerZ, size, thickness, rotation, color) {
     // 회전된 팔각 판 하나를 만들며 윗면과 옆면을 채운다.
         var segments = 8;
@@ -128,6 +131,7 @@
         }
     }
 
+    /** 플랫폼 사이를 잇는 천 스트립 생성 */
     function createTowerCloths() {
     // 인접 플랫폼 사이를 늘어진 천으로 연결.
         var clothColor = vec4(0.7, 0.25, 0.25, 1.0);
@@ -187,6 +191,7 @@
         }
     }
 
+    /** 수면 생성: 깊이/표면 레이어를 분리해 반투명 표현 */
     function createTowerWater() {
     // 타워 아래 얕은 반사 수조를 여러 사각형으로 구성.
         var waterSurfaceColor = vec4(0.85, 0.65, 0.3, 0.4);
@@ -234,6 +239,7 @@
         points.push(v2); colors.push(waterSurfaceColor);
     }
 
+    /** 좌측 내부 벽감 생성 */
     function createTowerRoom() {
     // 타워 내부 좌측 벽의 벽감 형상을 생성.
         var nicheInnerColor = vec4(0.97, 0.92, 0.73, 1.0);
@@ -285,6 +291,7 @@
         points.push(b0); colors.push(nicheShadowColor);
     }
 
+    /** 좌측 입구 스텐실 마스크 생성 */
     function createTowerEntranceMask() {
     // 좌측 벽에 문을 만드는 스텐실용 검은 사각형.
         var wallX = -0.5;
@@ -311,6 +318,7 @@
         points.push(v3); colors.push(maskColor);
     }
 
+    /** 우측 내부 벽감 생성(대칭) */
     function createTowerRoomRight() {
     // 내부 균형을 맞추기 위한 우측 벽의 대칭 벽감.
         var nicheInnerColor = vec4(0.97, 0.92, 0.73, 1.0);
@@ -362,6 +370,7 @@
         points.push(b0); colors.push(nicheShadowColor);
     }
 
+    /** 우측 입구 스텐실 마스크 생성 */
     function createTowerEntranceMaskRight() {
     // 우측 문을 위한 스텐실 마스크 사각형.
         var wallX = 0.5;

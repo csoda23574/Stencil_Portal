@@ -1,5 +1,6 @@
 (function (global) {
     // 설원 포털에 필요한 절벽, 바위, 기복 있는 눈밭, 포털 조명을 생성.
+    /** 설원 절벽 생성: 전/후면 레이어로 포털을 감싼다 */
     function createSnowCliffs() {
     // 포털을 감싸는 앞/뒤 절벽을 여러 층으로 구성.
         var frontCliffColor = vec4(0.7, 0.85, 0.95, 0.85);
@@ -39,6 +40,7 @@
         }
     }
 
+    /** 설원 바위/묘비 생성: 노이즈를 적용해 형태 변형 */
     function createSnowRocks() {
     // 묘비와 불규칙한 바위를 노이즈로 조형해 다양성을 확보.
         function createGravestones() {
@@ -163,6 +165,7 @@
         }
     }
 
+    /** 설원 바닥 생성: 높이맵 기반 눈판과 경계 스커트 */
     function createSnowField() {
     // 하이트 맵 기반 눈판 위에 수직 스커트를 추가해 가장자리를 덮는다.
         var baseY = -0.24;
@@ -285,6 +288,7 @@
         }
     }
 
+    /** 포털 광선 생성: 알파 블렌딩된 수직 광기둥 */
     function createPortalLightBeam() {
     // 포털 출구를 강조하기 위한 알파 블렌딩 광선.
         var beamColor = vec4(1.0, 1.0, 1.0, 0.7);

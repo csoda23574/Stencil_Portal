@@ -48,22 +48,27 @@ var portalConfigs = {
     4: { position: [0, 0.12, 1.9], yaw: 10, pitch: -8, scale: 2.1 }
 };
 
+/** 값 제한: value를 [minValue, maxValue] 범위로 클램프한다 */
 function clamp(value, minValue, maxValue) {
     return Math.min(Math.max(value, minValue), maxValue);
 }
 
+/** 벡터 합: 3차원 벡터 a+b 반환 */
 function addVec3(a, b) {
     return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 }
 
+/** 스칼라 곱: 3차원 벡터 v*scalar 반환 */
 function scaleVec3(v, scalar) {
     return [v[0] * scalar, v[1] * scalar, v[2] * scalar];
 }
 
+/** 벡터 길이: 3차원 벡터의 유클리드 노름 */
 function lengthVec3(v) {
     return Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
 }
 
+/** 정규화: 3차원 벡터를 단위벡터로 변환 */
 function normalizeVec3(v) {
     var len = lengthVec3(v);
     if (len === 0) {
@@ -72,6 +77,7 @@ function normalizeVec3(v) {
     return scaleVec3(v, 1 / len);
 }
 
+/** 각도→라디안 변환 */
 function degToRad(degrees) {
     return degrees * Math.PI / 180;
 }
@@ -85,6 +91,10 @@ function addQuad(v0, v1, v2, v3, color) {
     points.push(v3); colors.push(color);
 }
 
+/**
+ * 지오메트리 등록: 생성기(generator)를 실행해 현재 points/ colors 길이 기준으로
+ * 시작 오프셋과 개수를 계산하여 container[key]에 범위로 저장.
+ */
 function registerGeometry(container, key, generator) {
     if (!container) {
         console.warn("registerGeometry called without container for key:", key);
@@ -117,6 +127,7 @@ function buildCubeGeometry() {
     addQuad(vertices[4], vertices[7], vertices[3], vertices[0], darkGray);
 }
 
+/** 포털 프레임(앞/옆/뒤/옆) 면 4개를 큐브 형태로 생성 */
 function buildPortalGeometry() {
     var vertices = [
         vec4(-0.5, -0.5,  0.5, 1.0),
@@ -140,6 +151,7 @@ function buildPortalGeometry() {
     addQuad(vertices[4], vertices[0], vertices[1], vertices[5], portalColors[3]);
 }
 
+/** 포털 내부 바닥(하단 면) 생성 */
 function buildInnerFloorGeometry() {
     var darkGray = vec4(0.3, 0.3, 0.3, 1.0);
     addQuad(
@@ -151,30 +163,31 @@ function buildInnerFloorGeometry() {
     );
 }
 
+/** 허브의 스텐실 큐브: 외피, 포털 프레임, 내부 바닥을 등록 */
 function createStencilCube(range) {
     registerGeometry(range, "shell", buildCubeGeometry);
     registerGeometry(range, "portals", buildPortalGeometry);
     registerGeometry(range, "floor", buildInnerFloorGeometry);
 }
 
-// Portal_1.js 사막 자원 등록
+/** Portal_1.js 사막 자원 등록 */
 function createPortalOneScene(range) {
-    registerGeometry(range, "pyramid", createMountain);
+    registerGeometry(range, "mountain", createMountain);
     registerGeometry(range, "dunes", createDesertDunes);
     registerGeometry(range, "sun", createDesertSun);
     registerGeometry(range, "sandstorm", createDesertSandstorm);
     registerGeometry(range, "cloth", createDesertCloth);
 }
 
-// Portal_2.js 폐허 자원 등록
+/** Portal_2.js 폐허 자원 등록 */
 function createPortalTwoScene(range) {
     registerGeometry(range, "arch", createRuinsArch);
     registerGeometry(range, "pillars", createRuinsPillars);
     registerGeometry(range, "guardian", createRuinsGuardian);
-    registerGeometry(range, "light", createRuinsLight);
+    // registerGeometry(range, "light", createRuinsLight);
 }
 
-// Portal_3.js 타워 자원 등록
+/** Portal_3.js 타워 자원 등록 */
 function createPortalThreeScene(range) {
     registerGeometry(range, "entranceMask", createTowerEntranceMask);
     registerGeometry(range, "room", createTowerRoom);
@@ -186,7 +199,7 @@ function createPortalThreeScene(range) {
     registerGeometry(range, "water", createTowerWater);
 }
 
-// Portal_4.js 설원 자원 등록
+/** Portal_4.js 설원 자원 등록 */
 function createPortalFourScene(range) {
     registerGeometry(range, "field", createSnowField);
     registerGeometry(range, "cliffs", createSnowCliffs);
@@ -194,6 +207,10 @@ function createPortalFourScene(range) {
     registerGeometry(range, "beam", createPortalLightBeam);
 }
 
+/**
+ * 전체 지오메트리 빌드: 버퍼 비우고 스텐실 큐브 및 각 포털 장면을
+ * 순서대로 생성하여 geometryRanges에 등록
+ */
 function buildSceneGeometry() {
     points.length = 0;
     colors.length = 0;
@@ -215,7 +232,7 @@ function buildSceneGeometry() {
     createPortalFourScene(geometryRanges.portals.snow);
 }
 
-
+/** 현재 포털 카메라의 yaw/pitch로부터 시선 방향 벡터 계산 */
 function getPortalLookDirection() {
     var yawRad = degToRad(portalCamera.yaw);
     var pitchRad = degToRad(portalCamera.pitch);
@@ -227,6 +244,7 @@ function getPortalLookDirection() {
     return normalizeVec3(direction);
 }
 
+/** 포털 카메라 이동 입력 상태 초기화 */
 function resetPortalMovement() {
     portalMovement.forward = false;
     portalMovement.backward = false;
@@ -237,7 +255,7 @@ function resetPortalMovement() {
     portalMovement.fast = false;
 }
 
-// 허브에서 지정한 포털(1~4)로 진입하며 카메라 상태 초기화.
+/** 허브에서 지정한 포털(1~4)로 진입하며 카메라 상태 초기화 */
 function enterPortal(portalId) {
     if (!geometryRanges || !geometryRanges.portals) {
         return;
@@ -253,13 +271,14 @@ function enterPortal(portalId) {
     previousFrameTime = 0;
 }
 
+/** 포털 모드에서 허브 모드로 복귀 */
 function exitPortal() {
     renderMode = "hub";
     activePortal = 0;
     resetPortalMovement();
 }
 
-// 허브에서는 포털 번호, 포털 내부에서는 이동 입력을 처리.
+/** 키다운 처리: 허브=숫자 선택, 포털=이동/가속/상하/ESC */
 function handleKeyDown(event) {
     if (renderMode === "hub") {
         switch (event.code) {
@@ -327,6 +346,7 @@ function handleKeyDown(event) {
     }
 }
 
+/** 키업 처리: 포털 모드에서 이동/가속/상하 해제 */
 function handleKeyUp(event) {
     if (renderMode !== "portal") {
         return;
@@ -359,7 +379,7 @@ function handleKeyUp(event) {
     }
 }
 
-// 화살표와 Q/E 입력으로 포털 내부 자유 이동 카메라를 갱신.
+/** 화살표, Q/E, Shift로 포털 내부 자유비행 카메라 위치 갱신 */
 function updatePortalCamera(deltaTime) {
     var speedMultiplier = portalMovement.fast ? 2.0 : 1.0;
     var moveDistance = basePortalSpeed * speedMultiplier * deltaTime;
@@ -399,7 +419,7 @@ function updatePortalCamera(deltaTime) {
     portalCamera.position[1] = clamp(portalCamera.position[1], -0.4, 1.6);
 }
 
-// 사막 포털: 사구, 태양, 모래폭풍, 천 장식 렌더링.
+/** 사막 포털 렌더링: 피라미드/사구/태양/모래폭풍/천 */
 function drawDesertScene() {
     if (!geometryRanges || !geometryRanges.portals) {
         return;
@@ -408,8 +428,8 @@ function drawDesertScene() {
     if (!desert) {
         return;
     }
-    if (desert.pyramid.count > 0) {
-        gl.drawArrays(gl.TRIANGLES, desert.pyramid.start, desert.pyramid.count);
+    if (desert.mountain.count > 0) {
+        gl.drawArrays(gl.TRIANGLES, desert.mountain.start, desert.mountain.count);
     }
     if (desert.dunes.count > 0) {
         gl.drawArrays(gl.TRIANGLES, desert.dunes.start, desert.dunes.count);
@@ -431,7 +451,7 @@ function drawDesertScene() {
     }
 }
 
-// 폐허 포털: 기둥, 아치, 수호자, 볼류메트릭 조명 렌더링.
+/** 폐허 포털 렌더링: 아치/기둥/수호자/빛 입자 */
 function drawRuinsScene() {
     if (!geometryRanges || !geometryRanges.portals) {
         return;
@@ -449,15 +469,17 @@ function drawRuinsScene() {
     if (ruins.guardian.count > 0) {
         gl.drawArrays(gl.TRIANGLES, ruins.guardian.start, ruins.guardian.count);
     }
+    /*
     if (ruins.light.count > 0) {
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.drawArrays(gl.TRIANGLES, ruins.light.start, ruins.light.count);
         gl.disable(gl.BLEND);
     }
+    */
 }
 
-// 타워 포털: 내부 공간, 타워 본체, 천 장식, 수면 렌더링.
+/** 타워 포털 렌더링: 내부 마스크/룸/타워/플랫폼/천/수면 */
 function drawTowerScene() {
     if (!geometryRanges || !geometryRanges.portals) {
         return;
@@ -516,7 +538,7 @@ function drawTowerScene() {
     gl.colorMask(true, true, true, true);
 }
 
-// 설원 포털: 눈밭, 반투명 절벽, 암석, 광선 렌더링.
+/** 설원 포털 렌더링: 눈밭/절벽(블렌딩)/암석/광선 */
 function drawSnowScene() {
     if (!geometryRanges || !geometryRanges.portals) {
         return;
@@ -545,7 +567,7 @@ function drawSnowScene() {
     }
 }
 
-// 포털 밖일 때 허브 큐브와 각 면의 스텐실 영역을 렌더링.
+/** 허브 카메라로 기본 큐브(허브) 렌더링 */
 function renderHubCamera() {
     var modelViewMatrix = mat4();
     modelViewMatrix = mult(modelViewMatrix, rotate(rotationY, vec3(0, 1, 0)));
@@ -560,6 +582,7 @@ function renderHubCamera() {
     drawHubScene();
 }
 
+/** 허브 장면 그리기: 스텐실 설정 후 각 포털 내부 장면 미리보기 */
 function drawHubScene() {
     if (!geometryRanges || !geometryRanges.stencilCube) {
         return;
@@ -616,7 +639,7 @@ function drawHubScene() {
     gl.disable(gl.STENCIL_TEST);
 }
 
-// 번호를 택한 포털 내부로 들어간 뒤 자유 이동 카메라를 구성.
+/** 포털 카메라 구성 및 포털 내부 장면 렌더링 */
 function renderPortalCamera() {
     var direction = getPortalLookDirection();
     var target = addVec3(portalCamera.position, direction);
@@ -635,6 +658,7 @@ function renderPortalCamera() {
     drawPortalEnvironment(activePortal);
 }
 
+/** 포털 ID→렌더 함수 매핑 */
 var portalSceneDrawers = {
     1: drawDesertScene,
     2: drawRuinsScene,
@@ -642,6 +666,7 @@ var portalSceneDrawers = {
     4: drawSnowScene
 };
 
+/** 포털 ID에 해당하는 장면을 렌더 */
 function drawPortalEnvironment(portalId) {
     gl.disable(gl.STENCIL_TEST);
     gl.depthMask(true);
@@ -655,7 +680,7 @@ function drawPortalEnvironment(portalId) {
     }
 }
 
-// 캔버스 초기화 후 버퍼, 셰이더, 입력 이벤트를 세팅.
+/** onload 초기화: GL 컨텍스트/프로그램/버퍼/입력 이벤트 설정 */
 window.onload = function init() {
     canvas = document.getElementById("gl-canvas");
     gl = WebGLUtils.setupWebGL(canvas, { stencil: true });
@@ -747,6 +772,7 @@ window.onload = function init() {
     requestAnimFrame(render);
 };
 
+/** 프레임 루프: 입력 반영, 버퍼 클리어, 현재 모드 렌더 */
 function render(currentTime) {
     if (!gl) {
         return;
