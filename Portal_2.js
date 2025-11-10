@@ -385,3 +385,182 @@
     global.createGuardianHead = createGuardianHead;
     global.createGuardianFins = createGuardianFins;
 })(this);
+
+(function (global) {
+    var PORTAL_KEY = "ruins";
+    var hasInitialized = false;
+
+    function buildStandaloneGeometry() {
+        var localPoints = [];
+        var localColors = [];
+        var previousPoints = global.points;
+        var previousColors = global.colors;
+
+        // Reuse the existing generators by swapping the shared buffers temporarily.
+        global.points = localPoints;
+        global.colors = localColors;
+
+        try {
+            createRuinsPillars();
+            createRuinsArch();
+            createRuinsGuardian();
+        } finally {
+            global.points = previousPoints;
+            global.colors = previousColors;
+        }
+
+        return {
+            points: localPoints,
+            colors: localColors,
+            count: localPoints.length
+        };
+    }
+
+    function initializeStandalonePortal2() {
+        if (hasInitialized) {
+            return;
+        }
+
+        var canvas = global.document && global.document.getElementById("gl-canvas");
+        if (!canvas) {
+            return;
+        }
+
+        var gl = WebGLUtils.setupWebGL(canvas);
+        if (!gl) {
+            alert("WebGL isn't available");
+            return;
+        }
+
+        hasInitialized = true;
+
+        var rotationX = -10;
+        var rotationY = -15;
+        var zoom = 1.1;
+        var isDragging = false;
+        var previousMouseX = 0;
+        var previousMouseY = 0;
+        var modelViewMatrixLoc;
+        var projectionMatrixLoc;
+
+        var geometry = buildStandaloneGeometry();
+        var vertexCount = geometry.count;
+
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clearColor(0.02, 0.02, 0.05, 1.0);
+        gl.enable(gl.DEPTH_TEST);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+        var program = initShaders(gl, "vertex-shader", "fragment-shader");
+        gl.useProgram(program);
+
+        var cBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, cBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, flatten(geometry.colors), gl.STATIC_DRAW);
+        var vColor = gl.getAttribLocation(program, "vColor");
+        gl.vertexAttribPointer(vColor, 4, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(vColor);
+
+        var vBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, flatten(geometry.points), gl.STATIC_DRAW);
+        var vPosition = gl.getAttribLocation(program, "vPosition");
+        gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(vPosition);
+
+        modelViewMatrixLoc = gl.getUniformLocation(program, "modelViewMatrix");
+        projectionMatrixLoc = gl.getUniformLocation(program, "projectionMatrix");
+
+        function onMouseDown(event) {
+            isDragging = true;
+            previousMouseX = event.clientX;
+            previousMouseY = event.clientY;
+        }
+
+        function onMouseMove(event) {
+            if (!isDragging) {
+                return;
+            }
+            var deltaX = event.clientX - previousMouseX;
+            var deltaY = event.clientY - previousMouseY;
+            rotationY += deltaX * 0.5;
+            rotationX += deltaY * 0.5;
+            previousMouseX = event.clientX;
+            previousMouseY = event.clientY;
+        }
+
+        function stopDragging() {
+            isDragging = false;
+        }
+
+        function onWheel(event) {
+            event.preventDefault();
+            if (event.deltaY < 0) {
+                zoom *= 1.1;
+            } else {
+                zoom *= 0.9;
+            }
+            zoom = Math.max(0.3, Math.min(zoom, 3.0));
+        }
+
+        canvas.addEventListener("mousedown", onMouseDown);
+        canvas.addEventListener("mousemove", onMouseMove);
+        canvas.addEventListener("mouseup", stopDragging);
+        canvas.addEventListener("mouseleave", stopDragging);
+        canvas.addEventListener("wheel", onWheel, { passive: false });
+
+        function render() {
+            gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+            var modelViewMatrix = mat4();
+            modelViewMatrix = mult(modelViewMatrix, rotate(rotationY, vec3(0, 1, 0)));
+            modelViewMatrix = mult(modelViewMatrix, rotate(rotationX, vec3(1, 0, 0)));
+
+            var zoomFactor = 1.0 / zoom;
+            var projectionMatrix = ortho(-zoomFactor, zoomFactor, -zoomFactor, zoomFactor, -6.0, 6.0);
+
+            gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
+            gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix));
+
+            gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
+
+            requestAnimFrame(render);
+        }
+
+        render();
+    }
+
+    function shouldAutoInitialize() {
+        if (!global.document || !global.document.body) {
+            return false;
+        }
+        return global.document.body.getAttribute("data-portal") === PORTAL_KEY;
+    }
+
+    function scheduleAutoInitialize() {
+        if (!global.document) {
+            return;
+        }
+
+        function onReady() {
+            if (shouldAutoInitialize()) {
+                initializeStandalonePortal2();
+            }
+        }
+
+        if (global.document.readyState === "loading") {
+            global.document.addEventListener("DOMContentLoaded", onReady);
+        } else {
+            onReady();
+        }
+    }
+
+    if (!global.PortalStandalone) {
+        global.PortalStandalone = {};
+    }
+    global.PortalStandalone.ruins = initializeStandalonePortal2;
+    global.PortalStandalone["2"] = initializeStandalonePortal2;
+
+    scheduleAutoInitialize();
+})(this);
